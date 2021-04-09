@@ -1,10 +1,14 @@
 import re
 from typing import Optional, List, Union
+from errors import MalTypeError
 
 
 class MalAtom:
     def __init__(self, value):
         self.value = value
+
+    def __call__(self, *args):
+        raise MalTypeError(f'{self.value} is not a function')
 
     @classmethod
     def from_mal(cls, val) -> 'MalAtom':
@@ -15,7 +19,7 @@ class MalAtom:
         raise NotImplementedError
 
     def __eq__(self, other):
-        if not issubclass(other, MalAtom):
+        if not isinstance(other, MalAtom):
             return False
         return self.value == other.value
 
@@ -23,7 +27,7 @@ class MalAtom:
         return f'{self.__class__.__name__}({repr(self.value)})'
 
     def __hash__(self):
-        return hash(self.value)
+        raise MalTypeError(f'{self.value} can\'t be used as key')
 
     def mal_repr(self) -> str:
         return str(self.value)
@@ -78,6 +82,9 @@ class MalSymbol(MalAtom):
     def can_be_converted(cls, value):
         return True
 
+    def __hash__(self):
+        return hash(self.value)
+
 
 class MalNil(MalAtom):
     _nil_repr = 'nil'
@@ -102,6 +109,9 @@ class MalKeyword(MalAtom):
     @classmethod
     def can_be_converted(cls, value: str):
         return value[0] == ':'
+
+    def __hash__(self):
+        return hash(self.value)
 
 
 class MalList(MalAtom):

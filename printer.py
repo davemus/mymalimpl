@@ -6,4 +6,5 @@ def pr_str(value: MalAtom):
 
 
 def debug(value: MalAtom):
-    return repr(value)
+    print(repr(value))
+    return value

@@ -2,7 +2,8 @@ from collections import deque
 
 
 class UnmatchedParens(RuntimeError):
-    pass
+    def __str__(self):
+        return f'You have an unmatched parentheses at position {super().__str__()}'
 
 
 def check_parens(arg: str):

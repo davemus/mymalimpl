@@ -31,8 +31,7 @@ def main():
             check_parens(preprocessed)
             print(rep(preprocessed))
         except UnmatchedParens as e:
-            print('You have an unmatched parentheses:')
-            print(' ' * int(str(e)), 'v', sep='')
+            print(e)
             print(user_input)
         except (EOFError, KeyboardInterrupt):
             print()
