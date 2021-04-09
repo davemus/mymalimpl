@@ -1,4 +1,5 @@
 from collections import deque
+from typing import Deque
 
 
 class UnmatchedParens(RuntimeError):
@@ -7,7 +8,7 @@ class UnmatchedParens(RuntimeError):
 
 
 def check_parens(arg: str):
-    stack = deque()
+    stack: Deque[str] = deque()
     matching = {'(': ')', '[': ']', '{': '}'}
     for (num, i) in enumerate(arg):
         if i in '([{':

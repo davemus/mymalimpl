@@ -1,6 +1,5 @@
 import re
-from typing import Iterable, NewType, Type, List, Union
-
+from typing import Iterable, NewType, Type, List, Union, Mapping
 from mal_types import MalAtom, MalList, MalVector, MalHashmap, Sequential, atoms_order
 
 
@@ -43,12 +42,13 @@ def tokenize(arg: str) -> Iterable[Token]:
 def read_form(reader: Reader) -> MalAtom:
     curr_token = reader.peek()
     if curr_token in '([{':
-        sequential = {'(': MalList, '[': MalVector, '{': MalHashmap}.get(curr_token)
+        mapping: Mapping[str, Type[Sequential]] = {'(': MalList, '[': MalVector, '{': MalHashmap}
+        sequential = mapping[curr_token]
         return read_list(reader, sequential)
     return read_atom(reader)
 
 
-def read_list(reader: Reader, sequential: Sequential) -> Sequential:
+def read_list(reader: Reader, sequential: Type[Sequential]) -> Sequential:
     list_: List[MalAtom] = []
     reader.next()  # pass ([{ symbol
     while True:

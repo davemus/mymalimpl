@@ -60,7 +60,7 @@ class MalString(MalAtom):
 class MalBoolean(MalAtom):
     _possible_reprs = {'true': True, 'false': False}
     _repr = {True: 'true', False: 'false'}
-    
+
     @classmethod
     def from_mal(cls, value):
         return MalBoolean(cls._possible_reprs[value])

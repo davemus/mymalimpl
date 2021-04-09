@@ -15,4 +15,3 @@ def mal_readline(prompt='user> '):
 
 
 atexit.register(readline.write_history_file, history_file)
-
