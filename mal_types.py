@@ -34,6 +34,12 @@ class MalAtom:
 
 
 class MalNumber(MalAtom):
+    def __init__(self, value):
+        if int(value) == float(value):
+            self.value = int(value)
+        else:
+            self.value = value
+
     @classmethod
     def from_mal(cls, val):
         try:
