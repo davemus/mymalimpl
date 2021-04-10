@@ -106,6 +106,55 @@ class Step4Test(Step3Test):
         with self.assertRaises(NotFound):
             self.rep('(+ not-defined 1)')
 
+    def test_check_list(self):
+        self.myTest('(list? (list 1 2))', 'true')
+        self.myTest('(list? 1)', 'false')
+
+    def test_create_list(self):
+        self.myTest('(list 1 2)', '(1 2)')
+
+    def test_count(self):
+        self.myTest('(count (list 1 2 5))', '3')
+        self.myTest('(count ())', '0')
+
+    def test_equal(self):
+        self.myTest('(= 1 1)', 'true')
+        self.myTest('(= 1 2)', 'false')
+
+    def test_equality_lists(self):
+        self.myTest('(= (list 1 2 3) (list 1 2 3))', 'true')
+        self.myTest('(= (list 1 2 3) (list 3 2 1))', 'false')
+
+    def test_empty(self):
+        self.myTest('(empty? (list 1))', 'false')
+        self.myTest('(empty? ())', 'true')
+
+    def test_lt(self):
+        self.myTest('(< 1 2)', 'true')
+        self.myTest('(< 2 1)', 'false')
+        with self.assertRaises(MalTypeError):
+            self.rep('(< 1 "2")')
+
+    def test_le(self):
+        self.myTest('(<= 1 2)', 'true')
+        self.myTest('(<= 1 1)', 'true')
+        self.myTest('(<= 2 1)', 'false')
+        with self.assertRaises(MalTypeError):
+            self.rep('(<= 1 "2")')
+
+    def test_gt(self):
+        self.myTest('(> 1 2)', 'false')
+        self.myTest('(> 2 1)', 'true')
+        with self.assertRaises(MalTypeError):
+            self.rep('(> 1 "2")')
+
+    def test_ge(self):
+        self.myTest('(>= 1 2)', 'false')
+        self.myTest('(>= 1 1)', 'true')
+        self.myTest('(>= 2 1)', 'true')
+        with self.assertRaises(MalTypeError):
+            self.rep('(>= 1 "2")')
+
 
 if __name__ == '__main__':
     unittest.main()

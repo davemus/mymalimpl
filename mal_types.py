@@ -3,7 +3,7 @@ from typing import Optional, List, Union
 from errors import MalTypeError
 
 def not_implemented(self, other):
-    raise MalTypeError(f'Error: wrong argument type {self._type_name}')
+    raise MalTypeError(f'wrong argument type {self._type_name}')
 
 
 class MalAtom:
@@ -27,8 +27,8 @@ class MalAtom:
 
     def __eq__(self, other):
         if not isinstance(other, MalAtom):
-            return False
-        return self.value == other.value
+            return MalBoolean(False)
+        return MalBoolean(self.value == other.value)
 
     def __repr__(self):
         return f'{self.__class__.__name__}({repr(self.value)})'
@@ -99,10 +99,10 @@ class MalNumber(MalAtom):
             return not_implemented(self, other)
         return MalBoolean(self.value < other.value)
 
-    def __lte__(self, other):
+    def __le__(self, other):
         if not isinstance(other, MalNumber):
             return not_implemented(self, other)
-        return MalBoolen(self.value <= other.value)
+        return MalBoolean(self.value <= other.value)
 
 
 class MalString(MalAtom):
@@ -121,6 +121,9 @@ class MalBoolean(MalAtom):
     _type_name = 'boolean'
     _possible_reprs = {'true': True, 'false': False}
     _repr = {True: 'true', False: 'false'}
+
+    def __bool__(self):
+        return bool(self.value)
 
     @classmethod
     def from_mal(cls, value):
@@ -186,8 +189,15 @@ class MalList(MalAtom):
     def mal_repr(self):
         return f"({' '.join(atom.mal_repr() for atom in self.value)})"
 
-    def __eq__(self, value):
-        return False
+    def __eq__(self, other):
+        if not isinstance(other, MalList):
+            return MalBoolean(False)
+        if len(other) != len(self):
+            return MalBoolean(False)
+        return MalBoolean(all(a == b for a,b in zip(self.value, other.value)))
+
+    def __len__(self):
+        return len(self.value)
 
 
 class MalVector(MalAtom):
@@ -196,8 +206,15 @@ class MalVector(MalAtom):
     def mal_repr(self):
         return f"[{' '.join(atom.mal_repr() for atom in self.value)}]"
 
-    def __eq__(self, value):
-        return False
+    def __eq__(self, other):
+        if not isinstance(other, MalVector):
+            return MalBoolean(False)
+        if len(other) != len(self):
+            return MalBoolean(False)
+        return MalBoolean(all(a == b for a,b in zip(self.value, other.value)))
+
+    def __len__(self):
+        return len(self.value)
 
 
 class MalHashmap(MalAtom):
@@ -211,7 +228,7 @@ class MalHashmap(MalAtom):
         return "{" + ', '.join(list_of_elem) + "}"
 
     def __eq__(self, other):
-        return False
+        return MalBoolean(False)
 
 
 atoms_order = [MalBoolean, MalNumber, MalNil, MalKeyword, MalString, MalSymbol]

@@ -11,7 +11,7 @@ class Env:
         for bind, expr in list(zip(binds,exprs)):
             self.set(bind, expr)
 
-    def set(self, name: MalSymbol, mal_type: MalAtom):
+    def set(self, name: MalSymbol, mal_type):
         self._scope[name] = mal_type
 
     def find(self, name):
