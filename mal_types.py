@@ -125,7 +125,7 @@ class MalList(MalAtom):
         return f"({' '.join(atom.mal_repr() for atom in self.value)})"
 
     def __eq__(self, value):
-        raise NotImplementedError
+        return False
 
 
 class MalVector(MalAtom):
@@ -133,7 +133,7 @@ class MalVector(MalAtom):
         return f"[{' '.join(atom.mal_repr() for atom in self.value)}]"
 
     def __eq__(self, value):
-        raise NotImplementedError
+        return False
 
 
 class MalHashmap(MalAtom):
@@ -145,7 +145,7 @@ class MalHashmap(MalAtom):
         return "{" + ', '.join(list_of_elem) + "}"
 
     def __eq__(self, other):
-        raise NotImplemented
+        return False
 
 
 atoms_order = [MalBoolean, MalNumber, MalNil, MalKeyword, MalString, MalSymbol]

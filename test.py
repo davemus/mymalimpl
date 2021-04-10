@@ -3,7 +3,10 @@
 import unittest
 from step2 import rep as rep2
 from step3 import rep as rep3
+from step4 import rep as rep4
 from errors import MalTypeError, SpecialFormError, NotFound
+from core_compat import set_up_new_global_env as set_new_env_compat, repl_env as repl_env_compat
+from core import set_up_new_global_env as set_new_env, repl_env
 
 
 class Step2Test(unittest.TestCase):
@@ -14,6 +17,10 @@ class Step2Test(unittest.TestCase):
             self.rep(mal_expression),
             evaluated_expression
         )
+
+    def tearDown(self):
+        global repl_env_compat
+        repl_env_compat = set_new_env_compat()
 
     def test_addition(self):
         self.myTest('(+ 1 1 1)', '3')
@@ -66,6 +73,42 @@ class Step3Test(Step2Test):
     def test_access_not_bound_symbol(self):
         with self.assertRaises(NotFound):
             self.rep('(+ a 2)')
+
+
+class Step4Test(Step3Test):
+    rep = staticmethod(rep4)
+
+    def tearDown(self):
+        global repl_env
+        repl_env = set_new_env()
+
+    def test_function_repr(self):
+        self.myTest('(fn* (a) a)', '#function')
+
+    def test_call_function(self):
+        self.myTest('( (fn* (a) (* a a)) 2', '4')
+
+    def test_call_function_many_args(self):
+        self.myTest('( (fn* (a b) (/ (+ a b) 2)) 2 4 )', '3')
+
+    def test_call_function_wrong_number_of_args(self):
+        with self.assertRaises(SpecialFormError):
+            self.rep('( (fn* (a b) (+ a b)) 4 )')
+
+    def test_function_can_be_stored_in_env(self):
+        self.rep('(def! add-one (fn* (a) (+ a 1)))')
+        self.myTest('add-one', '#function')
+        self.myTest('(add-one 1)', '2')
+
+    def test_do_works(self):
+        self.myTest('(do 1 2)', '2')
+
+    def test_difficult_do_works(self):
+        self.myTest('(do (def! a 2) (+ a a))', '4')
+
+    def test_if_works(self):
+        self.myTest('(if true 1 2)', '1')
+        self.myTest('(if false 1 2)', '2')
 
 
 if __name__ == '__main__':

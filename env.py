@@ -3,9 +3,13 @@ from errors import NotFound
 
 
 class Env:
-    def __init__(self, outer=None):
+    def __init__(self, outer=None, binds=[], exprs=[]):
         self._scope = {}
         self._outer = outer
+        if len(binds) != len(exprs):
+            raise ValueError
+        for bind, expr in list(zip(binds,exprs)):
+            self.set(bind, expr)
 
     def set(self, name: MalSymbol, mal_type: MalAtom):
         self._scope[name] = mal_type

@@ -1,7 +1,9 @@
 from mal_types import MalAtom
 
 
-def pr_str(value: MalAtom):
+def pr_str(value):
+    if not isinstance(value, MalAtom) and callable(value):
+        return '#function'
     return value.mal_repr()
 
 
