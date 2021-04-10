@@ -2,14 +2,21 @@ from mal_types import MalAtom, MalSymbol
 from errors import NotFound
 
 
+VARIADIC_ASSIGNMENT_SYMBOL = MalSymbol('&')
+
+
 class Env:
     def __init__(self, outer=None, binds=[], exprs=[]):
         self._scope = {}
         self._outer = outer
-        if len(binds) != len(exprs):
+        if len(binds) != len(exprs) and not VARIADIC_ASSIGNMENT_SYMBOL in binds:
             raise ValueError
-        for bind, expr in list(zip(binds,exprs)):
-            self.set(bind, expr)
+        for counter in range(len(exprs)):
+            if binds[counter] == VARIADIC_ASSIGNMENT_SYMBOL:
+                for expr in exprs[counter:]:
+                    self.set(binds[counter + 1], expr)
+                return
+            self.set(binds[counter], exprs[counter])
 
     def set(self, name: MalSymbol, mal_type):
         self._scope[name] = mal_type

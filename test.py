@@ -155,6 +155,24 @@ class Step4Test(Step3Test):
         with self.assertRaises(MalTypeError):
             self.rep('(>= 1 "2")')
 
+    def test_not(self):
+        self.myTest('(not false)', 'true')
+        self.myTest('(not true)', 'false')
+
+    def test_first_rest_list(self):
+        self.myTest('(first (list 1 2))', '1')
+        self.myTest('(rest (list 1 2))', '(2)')
+
+    def test_first_rest_vector(self):
+        self.myTest('(first [1 2])', '1')
+        self.myTest('(rest [1 2])', '[2]')
+
+    def test_variadic_parameters(self):
+        self.rep('(def! alias (fn* (target & aliases) (if (not (empty? aliases)) (do (def! (first aliases) target) (alias source (rest aliases)) ) nil)))')
+        self.myTest('(alias + myadd hisadd', 'nil')
+        self.myTest('(myadd 1 1)', '2')
+        self.myTest('(hisadd 1 1)', '2')
+
 
 if __name__ == '__main__':
     unittest.main()

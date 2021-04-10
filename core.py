@@ -25,6 +25,9 @@ def set_up_new_global_env() -> Env:
     repl_env.set(MalSymbol('list?'), lambda *args: MalBoolean(isinstance(args[0], MalList)))
     repl_env.set(MalSymbol('count'), lambda *args: MalNumber(len(args[0])))
     repl_env.set(MalSymbol('empty?'), lambda *args: MalBoolean(len(args[0]) == 0))
+    repl_env.set(MalSymbol('not'), lambda arg: MalBoolean(not arg))
+    repl_env.set(MalSymbol('first'), lambda arg: arg.value[0])
+    repl_env.set(MalSymbol('rest'), lambda arg: arg.__class__(arg.value[1:]))
     return repl_env
 
 
