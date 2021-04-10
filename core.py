@@ -2,6 +2,7 @@ from functools import wraps, reduce
 from operator import add, sub, mul, truediv
 from mal_types import MalAtom, MalNumber, MalSymbol
 from errors import MalTypeError
+from env import Env
 
 
 def _construct_operation(op):
@@ -13,10 +14,10 @@ def _construct_operation(op):
         return MalNumber(reduce(op, (atom.value for atom in args)))
     return new_func
 
+repl_env = Env()
 
-repl_env = {
-    MalSymbol('+'): _construct_operation(add),
-    MalSymbol('-'): _construct_operation(sub),
-    MalSymbol('*'): _construct_operation(mul),
-    MalSymbol('/'): _construct_operation(truediv),
-}
+
+repl_env.set(MalSymbol('+'), _construct_operation(add))
+repl_env.set(MalSymbol('-'), _construct_operation(sub))
+repl_env.set(MalSymbol('*'), _construct_operation(mul))
+repl_env.set(MalSymbol('/'), _construct_operation(truediv))

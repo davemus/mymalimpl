@@ -6,11 +6,12 @@ from reader import read_str
 from printer import pr_str, debug
 from preprocessing import handle_comments, check_parens, UnmatchedParens
 from core import repl_env
+from env import Env
 from errors import MalTypeError
 from functools import reduce
 
 
-def eval_ast(ast: MalAtom, env: dict):
+def eval_ast(ast: MalAtom, env: Env):
     if isinstance(ast, MalVector):
         return MalVector([EVAL(atom) for atom in ast.value])
     if isinstance(ast, MalHashmap):
@@ -21,7 +22,7 @@ def eval_ast(ast: MalAtom, env: dict):
             )
         )
     if isinstance(ast, MalSymbol):
-        return env[ast]
+        return env.get(ast)
     elif isinstance(ast, MalList):
         return MalList([EVAL(atom) for atom in ast.value])
     else:
