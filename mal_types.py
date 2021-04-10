@@ -2,6 +2,9 @@ import re
 from typing import Optional, List, Union
 from errors import MalTypeError
 
+def not_implemented(self, other):
+    raise MalTypeError(f'Error: wrong argument type {self._type_name}')
+
 
 class MalAtom:
     def __init__(self, value):
@@ -9,6 +12,10 @@ class MalAtom:
 
     def __call__(self, *args):
         raise MalTypeError(f'{self.value} is not a function')
+
+    @property
+    def _type_name(self):
+        raise NotImplementedError
 
     @classmethod
     def from_mal(cls, val) -> 'MalAtom':
@@ -32,8 +39,13 @@ class MalAtom:
     def mal_repr(self) -> str:
         return str(self.value)
 
+    __add__ = __sub__ = __mul__ = __truediv__ = not_implemented
+    __gt__ = __ge__ = __lt__ = __le__ = not_implemented
+
 
 class MalNumber(MalAtom):
+    _type_name = 'number'
+
     def __init__(self, value):
         if int(value) == float(value):
             self.value = int(value)
@@ -52,8 +64,50 @@ class MalNumber(MalAtom):
     def can_be_converted(cls, value):
         return re.match(r'^\d+(\.\d*)?$', value)
 
+    def __add__(self, other):
+        if not isinstance(other, MalNumber):
+            return not_implemented(self, other)
+        return MalNumber(self.value + other.value)
+
+    def __sub__(self, other):
+        if not isinstance(other, MalNumber):
+            return not_implemented(self, other)
+        return MalNumber(self.value - other.value)
+
+    def __mul__(self, other):
+        if not isinstance(other, MalNumber):
+            return not_implemented(self, other)
+        return MalNumber(self.value * other.value)
+
+    def __truediv__(self, other):
+        if not isinstance(other, MalNumber):
+            return not_implemented(self, other)
+        return MalNumber(self.value / other.value)
+
+    def __gt__(self, other):
+        if not isinstance(other, MalNumber):
+            return not_implemented(self, other)
+        return MalBoolean(self.value > other.value)
+
+    def __ge__(self, other):
+        if not isinstance(other, MalNumber):
+            return not_implemented(self, other)
+        return MalBoolean(self.value >= other.value)
+
+    def __lt__(self, other):
+        if not isinstance(other, MalNumber):
+            return not_implemented(self, other)
+        return MalBoolean(self.value < other.value)
+
+    def __lte__(self, other):
+        if not isinstance(other, MalNumber):
+            return not_implemented(self, other)
+        return MalBoolen(self.value <= other.value)
+
 
 class MalString(MalAtom):
+    _type_name = 'string'
+
     @classmethod
     def from_mal(cls, value):
         return MalString(str(value))
@@ -64,6 +118,7 @@ class MalString(MalAtom):
 
 
 class MalBoolean(MalAtom):
+    _type_name = 'boolean'
     _possible_reprs = {'true': True, 'false': False}
     _repr = {True: 'true', False: 'false'}
 
@@ -80,6 +135,8 @@ class MalBoolean(MalAtom):
 
 
 class MalSymbol(MalAtom):
+    _type_name = 'symbol'
+
     @classmethod
     def from_mal(cls, value):
         return MalSymbol(str(value))
@@ -93,6 +150,7 @@ class MalSymbol(MalAtom):
 
 
 class MalNil(MalAtom):
+    _type_name = 'nil'
     _nil_repr = 'nil'
 
     @classmethod
@@ -108,6 +166,8 @@ class MalNil(MalAtom):
 
 
 class MalKeyword(MalAtom):
+    _type_name = 'keyword'
+
     @classmethod
     def from_mal(cls, value: str):
         return MalKeyword(value)
@@ -121,6 +181,8 @@ class MalKeyword(MalAtom):
 
 
 class MalList(MalAtom):
+    _type_name = 'list'
+
     def mal_repr(self):
         return f"({' '.join(atom.mal_repr() for atom in self.value)})"
 
@@ -129,6 +191,8 @@ class MalList(MalAtom):
 
 
 class MalVector(MalAtom):
+    _type_name = 'vector'
+
     def mal_repr(self):
         return f"[{' '.join(atom.mal_repr() for atom in self.value)}]"
 
@@ -137,6 +201,8 @@ class MalVector(MalAtom):
 
 
 class MalHashmap(MalAtom):
+    _type_name = 'hashmap'
+
     def __init__(self, value: List[MalAtom]):
         self.value = dict(zip(value[0::2], value[1::2]))
 

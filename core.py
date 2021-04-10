@@ -1,26 +1,26 @@
-from functools import wraps, reduce
-from operator import add, sub, mul, truediv
-from mal_types import MalAtom, MalNumber, MalSymbol
+from functools import reduce, partial
+from operator import add, sub, mul, truediv, eq, ge, le, gt, lt
+from mal_types import MalSymbol
 from errors import MalTypeError
 from env import Env
 
-
-def _construct_operation(op):
-    @wraps(op)
-    def new_func(*args: MalAtom):
-        for arg in args:
-            if not isinstance(arg, MalNumber):
-                raise MalTypeError(f'{arg.mal_repr()} is not a number')
-        return MalNumber(reduce(op, (atom.value for atom in args)))
-    return new_func
+def fn_many_arg(op):
+    def func(*args):
+        return reduce(op, args)
+    return func
 
 
 def set_up_new_global_env() -> Env:
     repl_env = Env()
-    repl_env.set(MalSymbol('+'), _construct_operation(add))
-    repl_env.set(MalSymbol('-'), _construct_operation(sub))
-    repl_env.set(MalSymbol('*'), _construct_operation(mul))
-    repl_env.set(MalSymbol('/'), _construct_operation(truediv))
+    repl_env.set(MalSymbol('+'), fn_many_arg(add))
+    repl_env.set(MalSymbol('-'), fn_many_arg(sub))
+    repl_env.set(MalSymbol('*'), fn_many_arg(mul))
+    repl_env.set(MalSymbol('/'), fn_many_arg(truediv))
+    repl_env.set(MalSymbol('<'), fn_many_arg(lt))
+    repl_env.set(MalSymbol('>'), fn_many_arg(gt))
+    repl_env.set(MalSymbol('<='), fn_many_arg(ge))
+    repl_env.set(MalSymbol('>='), fn_many_arg(le))
+    repl_env.set(MalSymbol('='), fn_many_arg(eq))
     return repl_env
 
 

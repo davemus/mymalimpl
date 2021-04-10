@@ -5,7 +5,7 @@ from mal_types import MalAtom, MalSymbol, MalList, MalVector, MalHashmap
 from reader import read_str
 from printer import pr_str, debug
 from preprocessing import handle_comments, check_parens, UnmatchedParens
-from core_compat import repl_env
+from core import repl_env
 from env import Env
 from errors import MalTypeError
 from functools import reduce
