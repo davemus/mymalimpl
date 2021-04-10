@@ -168,10 +168,8 @@ class Step4Test(Step3Test):
         self.myTest('(rest [1 2])', '[2]')
 
     def test_variadic_parameters(self):
-        self.rep('(def! alias (fn* (target & aliases) (if (not (empty? aliases)) (do (def! (first aliases) target) (alias source (rest aliases)) ) nil)))')
-        self.myTest('(alias + myadd hisadd', 'nil')
-        self.myTest('(myadd 1 1)', '2')
-        self.myTest('(hisadd 1 1)', '2')
+        self.rep('(def! list_alias (fn* (& args) args))')
+        self.myTest('(list_alias 1 2 3)', '(1 2 3)')
 
 
 if __name__ == '__main__':

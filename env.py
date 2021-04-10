@@ -1,4 +1,4 @@
-from mal_types import MalAtom, MalSymbol
+from mal_types import MalAtom, MalSymbol, MalList
 from errors import NotFound
 
 
@@ -13,8 +13,7 @@ class Env:
             raise ValueError
         for counter in range(len(exprs)):
             if binds[counter] == VARIADIC_ASSIGNMENT_SYMBOL:
-                for expr in exprs[counter:]:
-                    self.set(binds[counter + 1], expr)
+                self.set(binds[counter + 1], MalList(exprs[counter:]))
                 return
             self.set(binds[counter], exprs[counter])
 
