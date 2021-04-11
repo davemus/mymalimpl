@@ -5,6 +5,7 @@ from unittest.mock import patch
 from step2 import rep as rep2
 from step3 import rep as rep3
 from step4 import rep as rep4
+from step5 import rep as rep5
 from errors import MalTypeError, SpecialFormError, NotFound
 from core import set_up_new_global_env as set_new_env
 
@@ -170,6 +171,20 @@ class Step4Test(Step3Test):
     def test_variadic_parameters(self):
         self.rep('(def! list_alias (fn* (& args) args))')
         self.myTest('(list_alias 1 2 3)', '(1 2 3)')
+
+
+class Step5Test(Step4Test):
+    rep = staticmethod(rep5)
+
+    def test_tco(self):
+        self.rep('(def! sum2 (fn* (n acc) (if (= n 0) acc (sum2 (- n 1) (+ n acc)))))')
+        self.myTest('(sum2 10 0)', '55')
+        self.myTest('(sum2 10000 0)', '50005000')
+
+    def test_tco_2(self):
+        self.rep('(def! foo (fn* (n) (if (= n 0) 0 (bar (- n 1)))))')
+        self.rep('(def! bar (fn* (n) (if (= n 0) 0 (foo (- n 1)))))')
+        self.myTest('(foo 10000)', '0')
 
 
 if __name__ == '__main__':
