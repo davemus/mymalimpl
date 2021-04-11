@@ -188,38 +188,36 @@ class MalKeyword(MalAtom):
         return hash(self.value)
 
 
-class MalList(MalAtom):
+class MalIterable(MalAtom):
+    def __len__(self):
+        return len(self.value)
+
+    def __contains__(self, value):
+        return value in self.value
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return MalBoolean(False)
+        if len(other) != len(self):
+            return MalBoolean(False)
+        return MalBoolean(all(a == b for a,b in zip(self.value, other.value)))
+
+    def __getitem__(self, idx):
+        return self.value[idx]
+
+
+class MalList(MalIterable):
     _type_name = 'list'
 
     def mal_repr(self, readable):
         return f"({' '.join(atom.mal_repr(readable) for atom in self.value)})"
 
-    def __eq__(self, other):
-        if not isinstance(other, MalList):
-            return MalBoolean(False)
-        if len(other) != len(self):
-            return MalBoolean(False)
-        return MalBoolean(all(a == b for a,b in zip(self.value, other.value)))
 
-    def __len__(self):
-        return len(self.value)
-
-
-class MalVector(MalAtom):
+class MalVector(MalIterable):
     _type_name = 'vector'
 
     def mal_repr(self, readable):
         return f"[{' '.join(atom.mal_repr(readable) for atom in self.value)}]"
-
-    def __eq__(self, other):
-        if not isinstance(other, MalVector):
-            return MalBoolean(False)
-        if len(other) != len(self):
-            return MalBoolean(False)
-        return MalBoolean(all(a == b for a,b in zip(self.value, other.value)))
-
-    def __len__(self):
-        return len(self.value)
 
 
 class MalHashmap(MalAtom):
@@ -239,3 +237,18 @@ class MalHashmap(MalAtom):
 atoms_order = [MalBoolean, MalNumber, MalNil, MalKeyword, MalString, MalSymbol]
 
 Sequential = Union[MalList, MalVector, MalHashmap]
+
+
+class MalFunction(MalAtom):
+    def __init__(self, ast, params, env, fn):
+        self.ast = ast
+        self.params = params
+        self.env = env
+        self.fn = fn
+
+    @classmethod
+    def from_mal(cls, value):
+        raise NotImplementedError
+
+    def mal_repr(self, __):
+        return '#function'

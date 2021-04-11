@@ -85,7 +85,7 @@ class Step4Test(Step3Test):
         self.myTest('( (fn* (a b) (/ (+ a b) 2)) 2 4 )', '3')
 
     def test_call_function_wrong_number_of_args(self):
-        with self.assertRaises(SpecialFormError):
+        with self.assertRaises((SpecialFormError, ValueError)):
             self.rep('( (fn* (a b) (+ a b)) 4 )')
 
     def test_function_can_be_stored_in_env(self):
