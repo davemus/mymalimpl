@@ -36,7 +36,7 @@ class MalAtom:
     def __hash__(self):
         raise MalTypeError(f'{self.value} can\'t be used as key')
 
-    def mal_repr(self) -> str:
+    def mal_repr(self, readable) -> str:
         return str(self.value)
 
     __add__ = __sub__ = __mul__ = __truediv__ = not_implemented
@@ -110,11 +110,16 @@ class MalString(MalAtom):
 
     @classmethod
     def from_mal(cls, value):
-        return MalString(str(value))
+        return MalString(str(value[1:-1]))
 
     @classmethod
     def can_be_converted(cls, value):
         return re.match(r"""(".*")""", value)
+
+    def mal_repr(self, readable):
+        if readable:
+            return self.value
+        return self.value.encode().decode('unicode-escape')
 
 
 class MalBoolean(MalAtom):
@@ -133,7 +138,7 @@ class MalBoolean(MalAtom):
     def can_be_converted(cls, value):
         return value in cls._possible_reprs
 
-    def mal_repr(self):
+    def mal_repr(self, __):
         return self._repr[self.value]
 
 
@@ -164,7 +169,7 @@ class MalNil(MalAtom):
     def can_be_converted(cls, value):
         return value == cls._nil_repr
 
-    def mal_repr(self):
+    def mal_repr(self, __):
         return self._nil_repr
 
 
@@ -186,8 +191,8 @@ class MalKeyword(MalAtom):
 class MalList(MalAtom):
     _type_name = 'list'
 
-    def mal_repr(self):
-        return f"({' '.join(atom.mal_repr() for atom in self.value)})"
+    def mal_repr(self, readable):
+        return f"({' '.join(atom.mal_repr(readable) for atom in self.value)})"
 
     def __eq__(self, other):
         if not isinstance(other, MalList):
@@ -203,8 +208,8 @@ class MalList(MalAtom):
 class MalVector(MalAtom):
     _type_name = 'vector'
 
-    def mal_repr(self):
-        return f"[{' '.join(atom.mal_repr() for atom in self.value)}]"
+    def mal_repr(self, readable):
+        return f"[{' '.join(atom.mal_repr(readable) for atom in self.value)}]"
 
     def __eq__(self, other):
         if not isinstance(other, MalVector):
@@ -223,8 +228,8 @@ class MalHashmap(MalAtom):
     def __init__(self, value: List[MalAtom]):
         self.value = dict(zip(value[0::2], value[1::2]))
 
-    def mal_repr(self):
-        list_of_elem = [f'{key.mal_repr()} {value.mal_repr()}' for key, value in self.value.items()]
+    def mal_repr(self, readable):
+        list_of_elem = [f'{key.mal_repr(readable)} {value.mal_repr(readable)}' for key, value in self.value.items()]
         return "{" + ', '.join(list_of_elem) + "}"
 
     def __eq__(self, other):
