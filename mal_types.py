@@ -7,7 +7,7 @@ def not_implemented(self, other):
     raise MalTypeError(f'wrong argument type {self._type_name}')
 
 
-class MalAtom:
+class MalType:
     def __init__(self, value):
         self.value = value
 
@@ -19,7 +19,7 @@ class MalAtom:
         raise NotImplementedError
 
     @classmethod
-    def from_mal(cls, val: str) -> 'MalAtom':
+    def from_mal(cls, val: str) -> 'MalType':
         raise NotImplementedError
 
     @classmethod
@@ -27,7 +27,7 @@ class MalAtom:
         raise NotImplementedError
 
     def __eq__(self, other):
-        if not isinstance(other, MalAtom):
+        if not isinstance(other, MalType):
             return MalBoolean(False)
         return MalBoolean(self.value == other.value)
 
@@ -44,7 +44,7 @@ class MalAtom:
     __gt__ = __ge__ = __lt__ = __le__ = not_implemented
 
 
-class MalNumber(MalAtom):
+class MalNumber(MalType):
     _type_name = 'number'
 
     def __init__(self, value):
@@ -106,7 +106,7 @@ class MalNumber(MalAtom):
         return MalBoolean(self.value <= other.value)
 
 
-class MalString(MalAtom):
+class MalString(MalType):
     _type_name = 'string'
 
     @classmethod
@@ -123,7 +123,7 @@ class MalString(MalAtom):
         return self.value.encode().decode('unicode-escape')
 
 
-class MalBoolean(MalAtom):
+class MalBoolean(MalType):
     _type_name = 'boolean'
     _possible_reprs = {'true': True, 'false': False}
     _repr = {True: 'true', False: 'false'}
@@ -143,7 +143,7 @@ class MalBoolean(MalAtom):
         return self._repr[self.value]
 
 
-class MalSymbol(MalAtom):
+class MalSymbol(MalType):
     _type_name = 'symbol'
 
     @classmethod
@@ -158,7 +158,7 @@ class MalSymbol(MalAtom):
         return hash(self.value)
 
 
-class MalNil(MalAtom):
+class MalNil(MalType):
     _type_name = 'nil'
     _nil_repr = 'nil'
 
@@ -174,7 +174,7 @@ class MalNil(MalAtom):
         return self._nil_repr
 
 
-class MalKeyword(MalAtom):
+class MalKeyword(MalType):
     _type_name = 'keyword'
 
     @classmethod
@@ -189,7 +189,7 @@ class MalKeyword(MalAtom):
         return hash(self.value)
 
 
-class MalIterable(MalAtom):
+class MalIterable(MalType):
     def __len__(self):
         return len(self.value)
 
@@ -223,10 +223,10 @@ class MalVector(MalIterable):
         return f"[{' '.join(atom.mal_repr(readable) for atom in self.value)}]"
 
 
-class MalHashmap(MalAtom):
+class MalHashmap(MalType):
     _type_name = 'hashmap'
 
-    def __init__(self, value: List[MalAtom]):
+    def __init__(self, value: List[MalType]):
         self.value = dict(zip(value[0::2], value[1::2]))
 
     def mal_repr(self, readable):
@@ -245,7 +245,7 @@ atoms_order = [MalBoolean, MalNumber, MalNil, MalKeyword, MalString, MalSymbol]
 Sequential = Union[MalList, MalVector, MalHashmap]
 
 
-class MalFunction(MalAtom):
+class MalFunction(MalType):
     def __init__(self, ast, params, env, fn):
         self.ast = ast
         self.params = params

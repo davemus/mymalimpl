@@ -2,7 +2,7 @@
 
 from mal_readline import mal_readline
 from mal_types import (
-    MalAtom, MalSymbol, MalList, MalVector, MalHashmap, MalNil
+    MalType, MalSymbol, MalList, MalVector, MalHashmap, MalNil
 )
 from reader import read_str
 from printer import pr_str
@@ -13,7 +13,7 @@ from functools import reduce
 from env import Env
 
 
-def eval_ast(ast: MalAtom, env: Env):
+def eval_ast(ast: MalType, env: Env):
     if isinstance(ast, MalVector):
         return MalVector([EVAL(atom, env) for atom in ast.value])
     if isinstance(ast, MalHashmap):
@@ -31,7 +31,7 @@ def eval_ast(ast: MalAtom, env: Env):
         return ast
 
 
-def READ(arg: str) -> MalAtom:
+def READ(arg: str) -> MalType:
     return read_str(arg)
 
 
@@ -39,7 +39,7 @@ DEF_SYMBOL = MalSymbol('def!')
 LET_SYMBOL = MalSymbol('let*')
 
 
-def eval_special_form(ast: MalAtom, env: Env) -> MalAtom:
+def eval_special_form(ast: MalType, env: Env) -> MalType:
     if ast.value[0] == DEF_SYMBOL:
         try:
             op, symbol, value = ast.value
@@ -66,7 +66,7 @@ def eval_special_form(ast: MalAtom, env: Env) -> MalAtom:
     raise SpecialFormError(f'Unknown special form {ast.value[0].mal_repr()}')
 
 
-def EVAL(ast: MalAtom, env: Env) -> MalAtom:
+def EVAL(ast: MalType, env: Env) -> MalType:
     if not isinstance(ast, MalList):
         return eval_ast(ast, env)
     elif not ast.value:
@@ -77,7 +77,7 @@ def EVAL(ast: MalAtom, env: Env) -> MalAtom:
     return func(*args)
 
 
-def PRINT(arg: MalAtom) -> str:
+def PRINT(arg: MalType) -> str:
     return pr_str(arg)
 
 

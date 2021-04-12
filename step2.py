@@ -1,7 +1,7 @@
 #!/bin/python3
 
 from mal_readline import mal_readline
-from mal_types import MalAtom, MalSymbol, MalList, MalVector, MalHashmap
+from mal_types import MalType, MalSymbol, MalList, MalVector, MalHashmap
 from reader import read_str
 from printer import pr_str
 from preprocessing import handle_comments, check_parens, UnmatchedParens
@@ -11,7 +11,7 @@ from errors import MalTypeError
 from functools import reduce
 
 
-def eval_ast(ast: MalAtom, env: Env):
+def eval_ast(ast: MalType, env: Env):
     if isinstance(ast, MalVector):
         return MalVector([EVAL(atom) for atom in ast.value])
     if isinstance(ast, MalHashmap):
@@ -29,11 +29,11 @@ def eval_ast(ast: MalAtom, env: Env):
         return ast
 
 
-def READ(arg: str) -> MalAtom:
+def READ(arg: str) -> MalType:
     return read_str(arg)
 
 
-def EVAL(ast: MalAtom) -> MalAtom:
+def EVAL(ast: MalType) -> MalType:
     if not isinstance(ast, MalList):
         return eval_ast(ast, repl_env)
     elif not ast.value:
@@ -42,7 +42,7 @@ def EVAL(ast: MalAtom) -> MalAtom:
     return func(*args)
 
 
-def PRINT(arg: MalAtom) -> str:
+def PRINT(arg: MalType) -> str:
     return pr_str(arg)
 
 

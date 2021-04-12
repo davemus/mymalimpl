@@ -1,18 +1,17 @@
 #!/bin/python3
 
 from mal_readline import mal_readline
-from mal_types import MalAtom, MalSymbol, MalList, MalVector, MalHashmap, MalNil, MalBoolean, MalFunction
+from mal_types import MalType, MalSymbol, MalList, MalVector, MalHashmap, MalNil, MalBoolean, MalFunction
 from reader import read_str
-from printer import pr_str, debug
+from printer import pr_str
 from preprocessing import handle_comments, check_parens, UnmatchedParens
 from core import repl_env
 from errors import MalTypeError, NotFound, SpecialFormError
 from functools import reduce
 from env import Env
-from logger import log_function
 
 
-def eval_ast(ast: MalAtom, env: Env):
+def eval_ast(ast: MalType, env: Env):
     if isinstance(ast, MalVector):
         return MalVector([EVAL(atom, env) for atom in ast.value])
     if isinstance(ast, MalHashmap):
@@ -30,7 +29,7 @@ def eval_ast(ast: MalAtom, env: Env):
         return ast
 
 
-def READ(arg: str) -> MalAtom:
+def READ(arg: str) -> MalType:
     return read_str(arg)
 
 
@@ -41,7 +40,7 @@ DO_SYMBOL = MalSymbol('do')
 FN_SYMBOL = MalSymbol('fn*')
 
 
-def EVAL(ast: MalAtom, env: Env):
+def EVAL(ast: MalType, env: Env):
     while True:
         # not list rule of evaluation
         if not isinstance(ast, MalList):
@@ -76,8 +75,8 @@ def EVAL(ast: MalAtom, env: Env):
             ))
             for symb, value in symbol_value_pairs:
                 new_env.set(symb, value)
-            env = new_env  #tco
-            ast = instructions  #tco
+            env = new_env
+            ast = instructions
             continue
 
         # make bunch of instruction, return result of last
@@ -85,7 +84,7 @@ def EVAL(ast: MalAtom, env: Env):
             # do syntax is (do /expression1/ ... /expressionN/)
             op, *exprs = ast.value
             for expr in exprs[:-1]:  # tco
-                result = EVAL(expr, env)
+                EVAL(expr, env)
             ast = exprs[-1]  # tco
             continue
 
@@ -108,7 +107,8 @@ def EVAL(ast: MalAtom, env: Env):
                 op, binds, body = ast.value
             except ValueError:
                 raise SpecialFormError('fn* syntax us (fn* /arguments/ /function_body/)')
-            def closure(*arguments: MalAtom):
+
+            def closure(*arguments: MalType):
                 try:
                     new_env = Env(outer=env, binds=binds.value, exprs=arguments)
                 except ValueError:

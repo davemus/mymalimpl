@@ -1,7 +1,7 @@
 import re
 from typing import Iterable, NewType, Type, List, Mapping
 from mal_types import (
-    MalAtom, MalList, MalVector, MalHashmap, Sequential, atoms_order
+    MalType, MalList, MalVector, MalHashmap, Sequential, atoms_order
 )
 
 
@@ -29,7 +29,7 @@ class Reader:
         return token
 
 
-def read_str(arg: str) -> MalAtom:
+def read_str(arg: str) -> MalType:
     tokens = tokenize(arg)
     reader = Reader(tokens)
     return read_form(reader)
@@ -41,7 +41,7 @@ def tokenize(arg: str) -> Iterable[Token]:
     return [Token(match.strip()) for match in token_regex.findall(arg)]
 
 
-def read_form(reader: Reader) -> MalAtom:
+def read_form(reader: Reader) -> MalType:
     curr_token = reader.peek()
     if curr_token in '([{':
         token_to_type: Mapping[str, Type[Sequential]] = {
@@ -55,7 +55,7 @@ def read_form(reader: Reader) -> MalAtom:
 
 
 def read_list(reader: Reader, sequential: Type[Sequential]) -> Sequential:
-    list_: List[MalAtom] = []
+    list_: List[MalType] = []
     reader.next()  # pass ([{ symbol
     while True:
         token = reader.peek()
@@ -65,7 +65,7 @@ def read_list(reader: Reader, sequential: Type[Sequential]) -> Sequential:
         list_.append(read_form(reader))
 
 
-def read_atom(reader: Reader) -> MalAtom:
+def read_atom(reader: Reader) -> MalType:
     token = reader.next()
     for atom in atoms_order:
         if atom.can_be_converted(token):

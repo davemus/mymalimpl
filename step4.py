@@ -2,7 +2,7 @@
 
 from mal_readline import mal_readline
 from mal_types import (
-    MalAtom, MalSymbol, MalList, MalVector, MalHashmap, MalNil, MalBoolean
+    MalType, MalSymbol, MalList, MalVector, MalHashmap, MalNil, MalBoolean
 )
 from reader import read_str
 from printer import pr_str
@@ -13,7 +13,7 @@ from functools import reduce
 from env import Env
 
 
-def eval_ast(ast: MalAtom, env: Env):
+def eval_ast(ast: MalType, env: Env):
     if isinstance(ast, MalVector):
         return MalVector([EVAL(atom, env) for atom in ast.value])
     if isinstance(ast, MalHashmap):
@@ -31,7 +31,7 @@ def eval_ast(ast: MalAtom, env: Env):
         return ast
 
 
-def READ(arg: str) -> MalAtom:
+def READ(arg: str) -> MalType:
     return read_str(arg)
 
 
@@ -42,7 +42,7 @@ DO_SYMBOL = MalSymbol('do')
 FN_SYMBOL = MalSymbol('fn*')
 
 
-def eval_def(ast: MalAtom, env: Env):
+def eval_def(ast: MalType, env: Env):
     try:
         op, symbol, value = ast.value
     except ValueError:
@@ -51,7 +51,7 @@ def eval_def(ast: MalAtom, env: Env):
     return MalNil(None)
 
 
-def eval_let(ast: MalAtom, env: Env):
+def eval_let(ast: MalType, env: Env):
     let_error = SpecialFormError('let* syntax is (let* /list_of definitions/ /list_of_instructions/)')  # noqa
     new_env = Env(env)
     try:
@@ -69,7 +69,7 @@ def eval_let(ast: MalAtom, env: Env):
     return EVAL(instructions, new_env)
 
 
-def eval_do(ast: MalAtom, env: Env):
+def eval_do(ast: MalType, env: Env):
     # do syntax is (do /expression1/ ... /expressionN/)
     op, *exprs = ast.value
     for expr in exprs:
@@ -77,7 +77,7 @@ def eval_do(ast: MalAtom, env: Env):
     return result
 
 
-def eval_if(ast: MalAtom, env: Env):
+def eval_if(ast: MalType, env: Env):
     try:
         op, mal_condition, true_branch, false_branch = ast.value
     except ValueError:
@@ -88,13 +88,13 @@ def eval_if(ast: MalAtom, env: Env):
     return EVAL(true_branch, env)
 
 
-def eval_fn(ast: MalAtom, env: Env):
+def eval_fn(ast: MalType, env: Env):
     try:
         op, binds, body = ast.value
     except ValueError:
         raise SpecialFormError('fn* syntax us (fn* /arguments/ /function_body/)')  # noqa
 
-    def closure(*arguments: MalAtom):
+    def closure(*arguments: MalType):
         try:
             new_env = Env(outer=env, binds=binds.value, exprs=arguments)
         except ValueError:
@@ -106,7 +106,7 @@ def eval_fn(ast: MalAtom, env: Env):
     return closure
 
 
-def eval_special_form(ast: MalAtom, env: Env):
+def eval_special_form(ast: MalType, env: Env):
     if ast.value[0] == DEF_SYMBOL:
         return eval_def(ast, env)
     elif ast.value[0] == LET_SYMBOL:
@@ -120,7 +120,7 @@ def eval_special_form(ast: MalAtom, env: Env):
     raise SpecialFormError(f'Unknown special form {ast.value[0].mal_repr()}')
 
 
-def EVAL(ast: MalAtom, env: Env):
+def EVAL(ast: MalType, env: Env):
     if not isinstance(ast, MalList):
         return eval_ast(ast, env)
     elif not ast.value:

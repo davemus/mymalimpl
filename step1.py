@@ -1,21 +1,21 @@
 #!/bin/python3
 
 from mal_readline import mal_readline
-from mal_types import MalAtom
+from mal_types import MalType
 from reader import read_str
 from printer import pr_str
 from preprocessing import handle_comments, check_parens, UnmatchedParens
 
 
-def READ(arg: str) -> MalAtom:
+def READ(arg: str) -> MalType:
     return read_str(arg)
 
 
-def EVAL(arg: MalAtom) -> MalAtom:
+def EVAL(arg: MalType) -> MalType:
     return arg
 
 
-def PRINT(arg: MalAtom) -> str:
+def PRINT(arg: MalType) -> str:
     return pr_str(arg)
 
 
