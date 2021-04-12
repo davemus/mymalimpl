@@ -1,10 +1,12 @@
 #!/bin/python3
 
 import unittest
+import os
 from step2 import rep as rep2
 from step3 import rep as rep3
 from step4 import rep as rep4
 from step5 import rep as rep5
+from step6 import rep as rep6, setup_fns as set6
 from errors import MalTypeError, SpecialFormError, NotFound
 
 
@@ -183,6 +185,38 @@ class Step5Test(Step4Test):
         self.rep('(def! foo (fn* (n) (if (= n 0) 0 (bar (- n 1)))))')
         self.rep('(def! bar (fn* (n) (if (= n 0) 0 (foo (- n 1)))))')
         self.myTest('(foo 10000)', '0')
+
+
+class TestFile:
+    def __init__(self, file_name, data):
+        self.file_name = file_name
+        self.data = data
+
+    def __enter__(self):
+        with open(self.file_name, 'w') as f:
+            f.write(self.data)
+        return None
+
+    def __exit__(self, type, value, traceback):
+        os.system(f'rm {self.file_name}')
+
+
+class Step6Test(Step5Test):
+    rep = staticmethod(rep6)
+    setup = staticmethod(set6)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.setup()
+
+    def test_eval(self):
+        self.myTest('(eval (list + 2 5))', '7')
+
+    def test_load_file(self):
+        with TestFile('test.mal', '(def! variable-from-file 42)'):
+            self.rep('(load-file "test.mal")')
+            self.myTest('variable-from-file', '42')
 
 
 if __name__ == '__main__':

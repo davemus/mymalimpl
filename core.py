@@ -4,6 +4,7 @@ from mal_types import (
     MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil
 )
 from env import Env
+from reader import read_str
 
 
 def fn_many_arg(op):
@@ -28,6 +29,15 @@ def prn(*args):
 def _println(*args):
     print(_str(*args).mal_repr(False))
     return MalNil(None)
+
+
+def read_defis_string(mal_str: MalString):
+    return read_str(mal_str.value)
+
+
+def slurp(filename: MalString) -> MalString:
+    with open(filename.value, 'r') as f:
+        return MalString(f.read())
 
 
 def set_up_new_global_env() -> Env:
@@ -58,6 +68,8 @@ def set_up_new_global_env() -> Env:
     repl_env.set(MalSymbol('str'), _str)
     repl_env.set(MalSymbol('prn'), prn)
     repl_env.set(MalSymbol('println'), _println)
+    repl_env.set(MalSymbol('read-string'), read_defis_string)
+    repl_env.set(MalSymbol('slurp'), slurp)
     return repl_env
 
 
