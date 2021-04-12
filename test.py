@@ -218,6 +218,27 @@ class Step6Test(Step5Test):
             self.rep('(load-file "test.mal")')
             self.myTest('variable-from-file', '42')
 
+    def test_atom(self):
+        self.myTest('(atom? (atom 42))', 'true')
+
+    def test_deref(self):
+        self.myTest('(deref (atom "str"))', 'str')
+
+    def test_reset(self):
+        self.rep('(def! atom42 (atom 42))')
+        self.myTest('(deref atom42)', '42')
+        self.myTest('(reset! atom42 43)', '43')
+        self.myTest('(deref atom42)', '43')
+
+    def test_swap(self):
+        self.rep('(def! atom42 (atom 42))')
+        self.rep('(def! add-1 (fn* (arg) (+ arg 1)))')
+        self.myTest('(swap! atom42 add-1)', '43')
+
+    def test_short_defer(self):
+        self.rep('(def! atom42 (atom 42))')
+        self.myTest('@atom42', '42')
+
 
 if __name__ == '__main__':
     unittest.main()

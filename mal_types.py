@@ -258,3 +258,16 @@ class MalFunction(MalType):
 
     def mal_repr(self, __):
         return '#function'
+
+
+class MalAtom(MalType):
+    """MalAtom is a type, that holds reference to other mal_type"""
+    def __init__(self, value: MalType):
+        self.value = value
+
+    @classmethod
+    def from_mal(cls, value: str):
+        raise NotImplementedError
+
+    def mal_repr(self, readability):
+        return '#atom: ' + self.value.mal_repr(readability)

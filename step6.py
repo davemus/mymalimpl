@@ -1,7 +1,7 @@
 #!/bin/python3
 
 from mal_readline import mal_readline
-from mal_types import MalType, MalSymbol, MalList, MalVector, MalHashmap, MalNil, MalBoolean, MalFunction
+from mal_types import MalType, MalSymbol, MalList, MalVector, MalHashmap, MalNil, MalBoolean, MalFunction, MalAtom
 from reader import read_str
 from printer import pr_str
 from preprocessing import handle_comments, check_parens, UnmatchedParens
@@ -140,9 +140,34 @@ def eval(ast: MalType) -> MalType:
     return EVAL(ast, repl_env)
 
 
+def deref(mal_type: MalType) -> MalType:
+    if not isinstance(mal_type, MalAtom):
+        raise MalTypeError(f'Error: {mal_type.mal_repr(True)} is not an atom')
+    return mal_type.value
+
+
+def reset(atom, value):
+    atom.value = value
+    return value
+
+
+def swap(atom, fn, *args):
+    if isinstance(fn, MalFunction):
+        result = EVAL(fn.ast, Env(fn.env, fn.params, MalList([atom.value, *args])))
+    else:
+        result = fn(atom.value, *args)
+    atom.value = result
+    return atom.value
+
+
 def setup_fns():
     repl_env.set(MalSymbol('eval'), eval)
+    repl_env.set(MalSymbol('atom'), lambda arg: MalAtom(arg))
+    repl_env.set(MalSymbol('atom?'), lambda arg: MalBoolean(isinstance(arg, MalAtom)))
+    repl_env.set(MalSymbol('deref'), deref)
     rep('(def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) " nil)")))))')
+    repl_env.set(MalSymbol('reset!'), reset)
+    repl_env.set(MalSymbol('swap!'), swap)
 
 
 def main():

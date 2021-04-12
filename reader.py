@@ -1,7 +1,7 @@
 import re
 from typing import Iterable, NewType, Type, List, Mapping
 from mal_types import (
-    MalType, MalList, MalVector, MalHashmap, Sequential, atoms_order
+    MalType, MalList, MalVector, MalHashmap, Sequential, atoms_order, MalSymbol
 )
 
 
@@ -51,6 +51,9 @@ def read_form(reader: Reader) -> MalType:
         }
         sequential = token_to_type[curr_token]
         return read_list(reader, sequential)
+    elif curr_token == '@':
+        reader.next()
+        return MalList([MalSymbol('deref'), read_form(reader)])
     return read_atom(reader)
 
 
