@@ -1,15 +1,16 @@
 #!/bin/python3
 
 from mal_readline import mal_readline
-from mal_types import MalAtom, MalSymbol, MalList, MalVector, MalHashmap, MalNil
+from mal_types import (
+    MalAtom, MalSymbol, MalList, MalVector, MalHashmap, MalNil
+)
 from reader import read_str
-from printer import pr_str, debug
+from printer import pr_str
 from preprocessing import handle_comments, check_parens, UnmatchedParens
 from core import repl_env
 from errors import MalTypeError, NotFound, SpecialFormError
 from functools import reduce
 from env import Env
-from logger import log_function
 
 
 def eval_ast(ast: MalAtom, env: Env):
@@ -47,7 +48,7 @@ def eval_special_form(ast: MalAtom, env: Env) -> MalAtom:
         env.set(symbol, value)
         return MalNil(None)
     elif ast.value[0] == LET_SYMBOL:
-        let_error = SpecialFormError('let* syntax is (let* /list_of definitions/ /list_of_instructions/)')
+        let_error = SpecialFormError('let* syntax is (let* /list_of definitions/ /list_of_instructions/)')  # noqa
         new_env = Env(env)
         try:
             op, definitions, instructions = ast.value
@@ -55,7 +56,10 @@ def eval_special_form(ast: MalAtom, env: Env) -> MalAtom:
             raise let_error
         if len(definitions.value) % 2 != 0:
             raise let_error
-        symbol_value_pairs = list(zip(definitions.value[0::2], definitions.value[1::2]))
+        symbol_value_pairs = list(zip(
+            definitions.value[0::2],
+            definitions.value[1::2],
+        ))
         for symb, value in symbol_value_pairs:
             new_env.set(symb, value)
         return EVAL(instructions, new_env)

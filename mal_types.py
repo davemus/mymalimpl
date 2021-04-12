@@ -1,6 +1,7 @@
 import re
-from typing import Optional, List, Union
+from typing import List, Union
 from errors import MalTypeError
+
 
 def not_implemented(self, other):
     raise MalTypeError(f'wrong argument type {self._type_name}')
@@ -14,11 +15,11 @@ class MalAtom:
         raise MalTypeError(f'{self.value} is not a function')
 
     @property
-    def _type_name(self):
+    def _type_name(self) -> str:
         raise NotImplementedError
 
     @classmethod
-    def from_mal(cls, val) -> 'MalAtom':
+    def from_mal(cls, val: str) -> 'MalAtom':
         raise NotImplementedError
 
     @classmethod
@@ -200,7 +201,9 @@ class MalIterable(MalAtom):
             return MalBoolean(False)
         if len(other) != len(self):
             return MalBoolean(False)
-        return MalBoolean(all(a == b for a,b in zip(self.value, other.value)))
+        return MalBoolean(all(
+            a == b for a, b in zip(self.value, other.value)
+        ))
 
     def __getitem__(self, idx):
         return self.value[idx]
@@ -227,7 +230,10 @@ class MalHashmap(MalAtom):
         self.value = dict(zip(value[0::2], value[1::2]))
 
     def mal_repr(self, readable):
-        list_of_elem = [f'{key.mal_repr(readable)} {value.mal_repr(readable)}' for key, value in self.value.items()]
+        list_of_elem = [
+            f'{key.mal_repr(readable)} {value.mal_repr(readable)}'
+            for key, value in self.value.items()
+        ]
         return "{" + ', '.join(list_of_elem) + "}"
 
     def __eq__(self, other):

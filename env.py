@@ -1,4 +1,4 @@
-from mal_types import MalAtom, MalSymbol, MalList
+from mal_types import MalSymbol, MalList
 from errors import NotFound
 
 
@@ -9,7 +9,10 @@ class Env:
     def __init__(self, outer=None, binds=[], exprs=[]):
         self._scope = {}
         self._outer = outer
-        if len(binds) != len(exprs) and not VARIADIC_ASSIGNMENT_SYMBOL in binds:
+        if (
+            len(binds) != len(exprs)
+            and VARIADIC_ASSIGNMENT_SYMBOL not in binds
+        ):
             raise ValueError
         for counter in range(len(exprs)):
             if binds[counter] == VARIADIC_ASSIGNMENT_SYMBOL:

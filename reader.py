@@ -1,6 +1,8 @@
 import re
-from typing import Iterable, NewType, Type, List, Union, Mapping
-from mal_types import MalAtom, MalList, MalVector, MalHashmap, Sequential, atoms_order
+from typing import Iterable, NewType, Type, List, Mapping
+from mal_types import (
+    MalAtom, MalList, MalVector, MalHashmap, Sequential, atoms_order
+)
 
 
 Token = NewType('Token', str)
@@ -34,7 +36,7 @@ def read_str(arg: str) -> MalAtom:
 
 
 def tokenize(arg: str) -> Iterable[Token]:
-    regex_str = """[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)"""
+    regex_str = r"""[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)"""  # noqa
     token_regex = re.compile(regex_str)
     return [Token(match.strip()) for match in token_regex.findall(arg)]
 
@@ -42,8 +44,12 @@ def tokenize(arg: str) -> Iterable[Token]:
 def read_form(reader: Reader) -> MalAtom:
     curr_token = reader.peek()
     if curr_token in '([{':
-        mapping: Mapping[str, Type[Sequential]] = {'(': MalList, '[': MalVector, '{': MalHashmap}
-        sequential = mapping[curr_token]
+        token_to_type: Mapping[str, Type[Sequential]] = {
+            '(': MalList,
+            '[': MalVector,
+            '{': MalHashmap,
+        }
+        sequential = token_to_type[curr_token]
         return read_list(reader, sequential)
     return read_atom(reader)
 

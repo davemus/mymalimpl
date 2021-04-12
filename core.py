@@ -1,7 +1,8 @@
-from functools import reduce, partial
+from functools import reduce
 from operator import add, sub, mul, truediv, eq, ge, le, gt, lt
-from mal_types import MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil
-from errors import MalTypeError
+from mal_types import (
+    MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil
+)
 from env import Env
 
 
@@ -23,6 +24,7 @@ def prn(*args):
     print(pr_defis_str(*args).mal_repr(True))
     return MalNil(None)
 
+
 def _println(*args):
     print(_str(*args).mal_repr(False))
     return MalNil(None)
@@ -40,9 +42,15 @@ def set_up_new_global_env() -> Env:
     repl_env.set(MalSymbol('>='), fn_many_arg(ge))
     repl_env.set(MalSymbol('='), fn_many_arg(eq))
     repl_env.set(MalSymbol('list'), lambda *args: MalList(args))
-    repl_env.set(MalSymbol('list?'), lambda *args: MalBoolean(isinstance(args[0], MalList)))
+    repl_env.set(
+        MalSymbol('list?'),
+        lambda *args: MalBoolean(isinstance(args[0], MalList))
+    )
     repl_env.set(MalSymbol('count'), lambda *args: MalNumber(len(args[0])))
-    repl_env.set(MalSymbol('empty?'), lambda *args: MalBoolean(len(args[0]) == 0))
+    repl_env.set(
+        MalSymbol('empty?'),
+        lambda *args: MalBoolean(len(args[0]) == 0)
+    )
     repl_env.set(MalSymbol('not'), lambda arg: MalBoolean(not arg))
     repl_env.set(MalSymbol('first'), lambda arg: arg.value[0])
     repl_env.set(MalSymbol('rest'), lambda arg: arg.__class__(arg.value[1:]))

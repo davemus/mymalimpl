@@ -1,15 +1,16 @@
 #!/bin/python3
 
 from mal_readline import mal_readline
-from mal_types import MalAtom, MalSymbol, MalList, MalVector, MalHashmap, MalNil, MalBoolean
+from mal_types import (
+    MalAtom, MalSymbol, MalList, MalVector, MalHashmap, MalNil, MalBoolean
+)
 from reader import read_str
-from printer import pr_str, debug
+from printer import pr_str
 from preprocessing import handle_comments, check_parens, UnmatchedParens
 from core import repl_env
 from errors import MalTypeError, NotFound, SpecialFormError
 from functools import reduce
 from env import Env
-from logger import log_function
 
 
 def eval_ast(ast: MalAtom, env: Env):
@@ -51,7 +52,7 @@ def eval_def(ast: MalAtom, env: Env):
 
 
 def eval_let(ast: MalAtom, env: Env):
-    let_error = SpecialFormError('let* syntax is (let* /list_of definitions/ /list_of_instructions/)')
+    let_error = SpecialFormError('let* syntax is (let* /list_of definitions/ /list_of_instructions/)')  # noqa
     new_env = Env(env)
     try:
         op, definitions, instructions = ast.value
@@ -59,7 +60,10 @@ def eval_let(ast: MalAtom, env: Env):
         raise let_error
     if len(definitions.value) % 2 != 0:
         raise let_error
-    symbol_value_pairs = list(zip(definitions.value[0::2], definitions.value[1::2]))
+    symbol_value_pairs = list(zip(
+        definitions.value[0::2],
+        definitions.value[1::2]
+    ))
     for symb, value in symbol_value_pairs:
         new_env.set(symb, value)
     return EVAL(instructions, new_env)
@@ -77,7 +81,7 @@ def eval_if(ast: MalAtom, env: Env):
     try:
         op, mal_condition, true_branch, false_branch = ast.value
     except ValueError:
-        raise SpecialFormError('if syntax is (if /condition/ /true_branch/ /false_branch/)')
+        raise SpecialFormError('if syntax is (if /condition/ /true_branch/ /false_branch/)')  # noqa
     condition = EVAL(mal_condition, env)
     if condition in [MalNil(None), MalBoolean(False)]:
         return EVAL(false_branch, env)
@@ -88,7 +92,8 @@ def eval_fn(ast: MalAtom, env: Env):
     try:
         op, binds, body = ast.value
     except ValueError:
-        raise SpecialFormError('fn* syntax us (fn* /arguments/ /function_body/)')
+        raise SpecialFormError('fn* syntax us (fn* /arguments/ /function_body/)')  # noqa
+
     def closure(*arguments: MalAtom):
         try:
             new_env = Env(outer=env, binds=binds.value, exprs=arguments)
@@ -120,7 +125,9 @@ def EVAL(ast: MalAtom, env: Env):
         return eval_ast(ast, env)
     elif not ast.value:
         return ast
-    elif ast.value[0] in [DEF_SYMBOL, LET_SYMBOL, IF_SYMBOL, DO_SYMBOL, FN_SYMBOL]:
+    elif ast.value[0] in [
+        DEF_SYMBOL, LET_SYMBOL, IF_SYMBOL, DO_SYMBOL, FN_SYMBOL
+    ]:
         return eval_special_form(ast, env)
     func, *args = eval_ast(ast, env).value
     return func(*args)

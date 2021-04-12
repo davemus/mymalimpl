@@ -1,13 +1,11 @@
 #!/bin/python3
 
 import unittest
-from unittest.mock import patch
 from step2 import rep as rep2
 from step3 import rep as rep3
 from step4 import rep as rep4
 from step5 import rep as rep5
 from errors import MalTypeError, SpecialFormError, NotFound
-from core import set_up_new_global_env as set_new_env
 
 
 class Step2Test(unittest.TestCase):
@@ -177,7 +175,7 @@ class Step5Test(Step4Test):
     rep = staticmethod(rep5)
 
     def test_tco(self):
-        self.rep('(def! sum2 (fn* (n acc) (if (= n 0) acc (sum2 (- n 1) (+ n acc)))))')
+        self.rep('(def! sum2 (fn* (n acc) (if (= n 0) acc (sum2 (- n 1) (+ n acc)))))')  # noqa
         self.myTest('(sum2 10 0)', '55')
         self.myTest('(sum2 10000 0)', '50005000')
 

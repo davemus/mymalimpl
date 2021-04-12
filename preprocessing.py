@@ -4,7 +4,7 @@ from typing import Deque
 
 class UnmatchedParens(RuntimeError):
     def __str__(self):
-        return f'You have an unmatched parentheses at position {super().__str__()}'
+        return f'You have an unmatched parentheses at position {super().__str__()}'  # noqa
 
 
 def check_parens(arg: str):
