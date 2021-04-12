@@ -13,3 +13,12 @@ repos:
     rev: '3.8.4'
     hooks:
         -   id: flake8
+-   repo: local
+    hooks:
+        -   id: my_tests
+            name: Run tests
+            always_run: true
+            pass_filenames: false
+            entry: 'python3 test.py'
+            language: system
+            verbose: true
