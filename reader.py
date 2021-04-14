@@ -54,6 +54,18 @@ def read_form(reader: Reader) -> MalType:
     elif curr_token == '@':
         reader.next()
         return MalList([MalSymbol('deref'), read_form(reader)])
+    elif curr_token == '\'':
+        reader.next()
+        return MalList([MalSymbol('quote'), read_form(reader)])
+    elif curr_token == '`':
+        reader.next()
+        return MalList([MalSymbol('quasiquote'), read_form(reader)])
+    elif curr_token == '~':
+        reader.next()
+        return MalList([MalSymbol('unquote'), read_form(reader)])
+    elif curr_token == '~@':
+        reader.next()
+        return MalList([MalSymbol('splice-unquote'), read_form(reader)])
     return read_atom(reader)
 
 

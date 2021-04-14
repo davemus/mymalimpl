@@ -1,7 +1,8 @@
+from typing import List
 from functools import reduce
 from operator import add, sub, mul, truediv, eq, ge, le, gt, lt
 from mal_types import (
-    MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil, MalType
+    MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil, MalType, MalVector
 )
 from env import Env
 from reader import read_str
@@ -40,6 +41,16 @@ def slurp(filename: MalString) -> MalString:
         return MalString(f.read().strip())
 
 
+def cons(elem: MalType, list_: MalList) -> MalList:
+    return MalList([elem, *list_.value])
+
+
+def concat(*args: MalList) -> MalList:
+    list_of_lists = [arg.value for arg in args]
+    list_: List[MalType] = reduce(add, list_of_lists, [])
+    return MalList(list_)
+
+
 def set_up_new_global_env() -> Env:
     repl_env = Env()
     repl_env.set(MalSymbol('+'), fn_many_arg(add))
@@ -70,6 +81,9 @@ def set_up_new_global_env() -> Env:
     repl_env.set(MalSymbol('println'), _println)
     repl_env.set(MalSymbol('read-string'), read_defis_string)
     repl_env.set(MalSymbol('slurp'), slurp)
+    repl_env.set(MalSymbol('cons'), cons)
+    repl_env.set(MalSymbol('concat'), concat)
+    repl_env.set(MalSymbol('vec'), lambda *args: MalVector(args))
     return repl_env
 
 

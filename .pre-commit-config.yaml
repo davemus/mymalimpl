@@ -15,7 +15,7 @@ repos:
             args: ['--max-line-length=120']
 -   repo: local
     hooks:
-        -   id: my_tests
+        -   id: test
             name: Run tests
             always_run: true
             pass_filenames: false

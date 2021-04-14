@@ -7,10 +7,11 @@ from step3 import rep as rep3
 from step4 import rep as rep4
 from step5 import rep as rep5
 from step6 import rep as rep6, setup_fns as set6
+from step7 import rep as rep7, setup_fns as set7
 from errors import MalTypeError, SpecialFormError, NotFound
 
 
-SKIP_LONG_TESTS = False
+SKIP_LONG_TESTS = True
 
 
 class Step2Test(unittest.TestCase):
@@ -255,6 +256,62 @@ class Step6Test(Step5Test):
     def test_run_program_with_arguments(self):
         with TestFile('test.mal', '(prn *ARGS*)'):
             self.assertCLI(['./step6.py', 'test.mal', '1', '2', '3'], '(1 2 3)')
+
+
+class Step7Test(Step6Test):
+    rep = staticmethod(rep7)
+    setup = staticmethod(set7)
+
+    def test_cons(self):
+        self.myTest('(cons 1 (list 2 3))', '(1 2 3)')
+
+    def test_concat(self):
+        self.myTest('(concat (list 1) (list 2) (list 3 4))', '(1 2 3 4)')
+
+    def test_quote(self):
+        self.myTest('(quote (1 2 3))', '(1 2 3)')
+        self.myTest('(quote undefined)', 'undefined')
+
+    def test_quasiquote(self):
+        self.rep('(def! nested (list 2 3))')
+        self.myTest('(quasiqote (1 nested 4))', '(1 nested 4)')
+
+    def test_quasiquote_unquote(self):
+        self.rep('(def! nested (list 2 3))')
+        self.myTest('(quasiqote (1 (unquote nested) 4))', '(1 (2 3) 4)')
+
+    def test_quasiquote_splice_unquote(self):
+        self.rep('(def! nested (list 2 3))')
+        self.myTest('(quasiqote (1 (splice-unquote nested) 4))', '(1 2 3 4)')
+
+    def test_shortcut_quote(self):
+        self.myTest('\'(1 2 3))', '(1 2 3)')
+        self.myTest('\'undefined', 'undefined')
+
+    def test_shortcut_quasiquote(self):
+        self.rep('(def! nested (list 2 3))')
+        self.myTest('`(1 nested 4)', '(1 nested 4)')
+
+    def test_shortcut_quasiquote_unquote(self):
+        self.rep('(def! nested (list 2 3))')
+        self.myTest('`(1 ~nested 4)', '(1 (2 3) 4)')
+
+    def test_shortcut_quasiquote_splice_unquote(self):
+        self.rep('(def! nested (list 2 3))')
+        self.myTest('`(1 ~@nested 4)', '(1 2 3 4)')
+
+    def test_quote_vectors(self):
+        self.rep('(def! nested (list 2 3))')
+        self.myTest('(quote [1 nested 4])', '[1 nested 4]')
+
+    def test_vec(self):
+        self.myTest('(vec 1 2 3)', '[1 2 3]')
+
+    def test_concat_list_and_vector(self):
+        self.myTest('(concat [1] (list 2) [3])', '(1 2 3)')
+
+    def test_cons_vector(self):
+        self.myTest('(cons 1 [2 3])', '(1 2 3)')
 
 
 if __name__ == '__main__':
