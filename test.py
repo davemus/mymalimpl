@@ -1,13 +1,16 @@
 #!/bin/python3
 
 import unittest
-import os
+import subprocess
 from step2 import rep as rep2
 from step3 import rep as rep3
 from step4 import rep as rep4
 from step5 import rep as rep5
 from step6 import rep as rep6, setup_fns as set6
 from errors import MalTypeError, SpecialFormError, NotFound
+
+
+SKIP_LONG_TESTS = False
 
 
 class Step2Test(unittest.TestCase):
@@ -176,11 +179,13 @@ class Step4Test(Step3Test):
 class Step5Test(Step4Test):
     rep = staticmethod(rep5)
 
+    @unittest.skipIf(SKIP_LONG_TESTS, 'This test is disabled for debug')
     def test_tco(self):
         self.rep('(def! sum2 (fn* (n acc) (if (= n 0) acc (sum2 (- n 1) (+ n acc)))))')  # noqa
         self.myTest('(sum2 10 0)', '55')
         self.myTest('(sum2 10000 0)', '50005000')
 
+    @unittest.skipIf(SKIP_LONG_TESTS, 'This test is disabled for debug')
     def test_tco_2(self):
         self.rep('(def! foo (fn* (n) (if (= n 0) 0 (bar (- n 1)))))')
         self.rep('(def! bar (fn* (n) (if (= n 0) 0 (foo (- n 1)))))')
@@ -198,7 +203,7 @@ class TestFile:
         return None
 
     def __exit__(self, type, value, traceback):
-        os.system(f'rm {self.file_name}')
+        subprocess.run(['rm', self.file_name])
 
 
 class Step6Test(Step5Test):
@@ -209,6 +214,10 @@ class Step6Test(Step5Test):
     def setUpClass(cls):
         super().setUpClass()
         cls.setup()
+
+    def assertCLI(self, commands, expected_in_stdout):
+        proc_result = subprocess.run(commands, capture_output=True)
+        self.assertIn(expected_in_stdout, proc_result.stdout.decode('unicode-escape'))
 
     def test_eval(self):
         self.myTest('(eval (list + 2 5))', '7')
@@ -238,6 +247,14 @@ class Step6Test(Step5Test):
     def test_short_defer(self):
         self.rep('(def! atom42 (atom 42))')
         self.myTest('@atom42', '42')
+
+    def test_run_program_from_cli(self):
+        with TestFile('test.mal', '(def! variable-from-file2 44)\nvariable-from-file2'):
+            self.assertCLI(['./step6.py', 'test.mal'], '44')
+
+    def test_run_program_with_arguments(self):
+        with TestFile('test.mal', '(prn *ARGS*)'):
+            self.assertCLI(['./step6.py', 'test.mal', '1', '2', '3'], '(1 2 3)')
 
 
 if __name__ == '__main__':

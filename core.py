@@ -1,7 +1,7 @@
 from functools import reduce
 from operator import add, sub, mul, truediv, eq, ge, le, gt, lt
 from mal_types import (
-    MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil
+    MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil, MalType
 )
 from env import Env
 from reader import read_str
@@ -31,13 +31,13 @@ def _println(*args):
     return MalNil(None)
 
 
-def read_defis_string(mal_str: MalString):
+def read_defis_string(mal_str: MalString) -> MalType:
     return read_str(mal_str.value)
 
 
 def slurp(filename: MalString) -> MalString:
     with open(filename.value, 'r') as f:
-        return MalString(f.read())
+        return MalString(f.read().strip())
 
 
 def set_up_new_global_env() -> Env:

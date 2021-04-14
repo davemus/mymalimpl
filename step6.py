@@ -1,5 +1,6 @@
 #!/bin/python3
 
+import argparse
 from mal_readline import mal_readline
 from mal_types import MalType, MalSymbol, MalList, MalVector, MalHashmap, MalNil, MalBoolean, MalFunction, MalAtom
 from reader import read_str
@@ -136,7 +137,7 @@ def rep(arg: str):
     return PRINT(EVAL(READ(arg), repl_env))
 
 
-def eval(ast: MalType) -> MalType:
+def my_eval(ast: MalType) -> MalType:
     return EVAL(ast, repl_env)
 
 
@@ -161,17 +162,30 @@ def swap(atom, fn, *args):
 
 
 def setup_fns():
-    repl_env.set(MalSymbol('eval'), eval)
+    repl_env.set(MalSymbol('eval'), my_eval)
     repl_env.set(MalSymbol('atom'), lambda arg: MalAtom(arg))
     repl_env.set(MalSymbol('atom?'), lambda arg: MalBoolean(isinstance(arg, MalAtom)))
     repl_env.set(MalSymbol('deref'), deref)
-    rep('(def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) " nil)")))))')
+    rep('(def! load-file (fn* (f) (eval (read-string (pr-str "(do" (slurp f) ")")))))')
     repl_env.set(MalSymbol('reset!'), reset)
     repl_env.set(MalSymbol('swap!'), swap)
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', '--interactive', action='store_true')
+parser.add_argument('filename', nargs='?', help='Filename to be executed')
+parser.add_argument('prog_args', nargs='*', help='Arguments passed to program')
+args = parser.parse_args()
+
+
 def main():
     setup_fns()
+    if args.filename is not None:
+        rep(f'(def! *FILENAME* "{args.filename}"')
+        rep(f'(def! *ARGS* {"(list " +  " ".join(args.prog_args) + ")" })')
+        print(rep('(load-file *FILENAME*)'))
+        if not args.interactive:
+            return 0
     while True:
         try:
             user_input = mal_readline()
