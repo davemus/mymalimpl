@@ -39,6 +39,13 @@ LET_SYMBOL = MalSymbol('let*')
 IF_SYMBOL = MalSymbol('if')
 DO_SYMBOL = MalSymbol('do')
 FN_SYMBOL = MalSymbol('fn*')
+QUOTE_SYMBOL = MalSymbol('quote')
+QUASIQUOTE_SYMBOL = MalSymbol('quasiquote')
+UNQUOTE_SYMBOL = MalSymbol('unquote')
+SPLICE_UNQUOTE_SYMBOL = MalSymbol('splice-unquote')
+CONCAT_SYMBOL = MalSymbol('concat')
+CONS_SYMBOL = MalSymbol('cons')
+VEC_SYMBOL = MalSymbol('vec')
 
 
 def EVAL(ast: MalType, env: Env):
@@ -120,6 +127,14 @@ def EVAL(ast: MalType, env: Env):
                 return EVAL(body, new_env)
             return MalFunction(body, binds, env, closure)
 
+        # quoting element
+        elif ast.value[0] == QUOTE_SYMBOL:
+            return ast.value[1]
+
+        # unquoting element
+        elif ast.value[0] == QUASIQUOTE_SYMBOL:
+            ast = quasiquote(ast.value[1])
+
         # apply/invoke function
         func, *args = eval_ast(ast, env).value
         if not isinstance(func, MalFunction):
@@ -159,6 +174,25 @@ def swap(atom, fn, *args):
         result = fn(atom.value, *args)
     atom.value = result
     return atom.value
+
+
+def quasiquote(ast: MalType):
+    if isinstance(ast, MalList):
+        if ast.value[0] == UNQUOTE_SYMBOL:
+            return ast.value[1]
+        else:
+            processed = MalList([])
+            for elt in ast.value[::-1]:
+                if isinstance(elt, MalList) and elt.value[0] == SPLICE_UNQUOTE_SYMBOL:
+                    processed = MalList([CONCAT_SYMBOL, elt.value[1], processed])
+                else:
+                    processed = MalList([CONS_SYMBOL, quasiquote(elt), processed])
+            return processed
+    elif isinstance(ast, MalVector):
+        return MalList([VEC_SYMBOL, ast])
+    elif isinstance(ast, (MalSymbol, MalHashmap)):
+        return MalList([QUOTE_SYMBOL, ast])
+    return ast
 
 
 def setup_fns():

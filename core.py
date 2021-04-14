@@ -46,7 +46,7 @@ def cons(elem: MalType, list_: MalList) -> MalList:
 
 
 def concat(*args: MalList) -> MalList:
-    list_of_lists = [arg.value for arg in args]
+    list_of_lists = [list(arg.value) for arg in args]
     list_: List[MalType] = reduce(add, list_of_lists, [])
     return MalList(list_)
 

@@ -11,7 +11,7 @@ from step7 import rep as rep7, setup_fns as set7
 from errors import MalTypeError, SpecialFormError, NotFound
 
 
-SKIP_LONG_TESTS = True
+SKIP_LONG_TESTS = False
 
 
 class Step2Test(unittest.TestCase):
@@ -274,15 +274,15 @@ class Step7Test(Step6Test):
 
     def test_quasiquote(self):
         self.rep('(def! nested (list 2 3))')
-        self.myTest('(quasiqote (1 nested 4))', '(1 nested 4)')
+        self.myTest('(quasiquote (1 nested 4))', '(1 nested 4)')
 
     def test_quasiquote_unquote(self):
         self.rep('(def! nested (list 2 3))')
-        self.myTest('(quasiqote (1 (unquote nested) 4))', '(1 (2 3) 4)')
+        self.myTest('(quasiquote (1 (unquote nested) 4))', '(1 (2 3) 4)')
 
     def test_quasiquote_splice_unquote(self):
         self.rep('(def! nested (list 2 3))')
-        self.myTest('(quasiqote (1 (splice-unquote nested) 4))', '(1 2 3 4)')
+        self.myTest('(quasiquote (1 (splice-unquote nested) 4))', '(1 2 3 4)')
 
     def test_shortcut_quote(self):
         self.myTest('\'(1 2 3))', '(1 2 3)')
