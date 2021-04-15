@@ -1,0 +1,3 @@
+(defmacro! when
+    (fn* (test . branch)
+        (list 'if test '(do branch))))

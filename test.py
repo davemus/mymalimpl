@@ -321,7 +321,7 @@ class Step8Test(Step7Test):
 
     def test_when_macros(self):
         self.rep('''
-        (define-macro when
+        (defmacro! when
             (fn* (test . branch)
             (list 'if test
                 (cons 'begin branch))))

@@ -35,6 +35,7 @@ def READ(arg: str) -> MalType:
     return read_str(arg)
 
 
+# special forms
 DEF_SYMBOL = MalSymbol('def!')
 LET_SYMBOL = MalSymbol('let*')
 IF_SYMBOL = MalSymbol('if')
@@ -44,6 +45,9 @@ QUOTE_SYMBOL = MalSymbol('quote')
 QUASIQUOTE_SYMBOL = MalSymbol('quasiquote')
 UNQUOTE_SYMBOL = MalSymbol('unquote')
 SPLICE_UNQUOTE_SYMBOL = MalSymbol('splice-unquote')
+DEFMACRO_SYMBOL = MalSymbol('defmacro!')
+
+# functions
 CONCAT_SYMBOL = MalSymbol('concat')
 CONS_SYMBOL = MalSymbol('cons')
 VEC_SYMBOL = MalSymbol('vec')
@@ -58,6 +62,11 @@ def EVAL(ast: MalType, env: Env):
         # empty list evaluates to itself
         elif not ast.value:
             return ast
+
+        else:
+            ast = macroexpand(ast, env)
+            if not isinstance(ast, MalList):
+                return eval_ast(ast, env)
 
         # defining things
         if ast.value[0] == DEF_SYMBOL:
@@ -136,6 +145,18 @@ def EVAL(ast: MalType, env: Env):
         elif ast.value[0] == QUASIQUOTE_SYMBOL:
             ast = quasiquote(ast.value[1])
 
+        elif ast.value[0] == DEFMACRO_SYMBOL:
+            try:
+                op, symbol, operation_ast = ast.value
+                fn_sym, binds, body = operation_ast
+                if fn_sym != FN_SYMBOL:
+                    raise ValueError
+            except ValueError:
+                raise SpecialFormError('defmacro! syntax is (def! /symbol/ /function_body/)')
+            fn = MalFunction(ast, binds, env, None, True)  # fn.fn is set to None. Check in step 9 is it ok
+            env.set(symbol, fn)
+            return MalNil(None)
+
         # apply/invoke function
         func, *args = eval_ast(ast, env).value
         if not isinstance(func, MalFunction):
@@ -193,6 +214,25 @@ def quasiquote(ast: MalType):
         return MalList([VEC_SYMBOL, ast])
     elif isinstance(ast, (MalSymbol, MalHashmap)):
         return MalList([QUOTE_SYMBOL, ast])
+    return ast
+
+
+def is_macro_call(ast, env):
+    try:
+        return (
+            isinstance(ast, MalList)
+            and isinstance(ast.value[0], MalSymbol)
+            and env.get(ast.value[0]).is_macro
+        )
+    except (AttributeError, NotFound):
+        return False
+
+
+def macroexpand(ast, env):
+    while is_macro_call(ast, env):
+        fn_name, *arguments = ast.value
+        macro_fn = env.get(fn_name)
+        ast = EVAL(macro_fn.ast, Env(macro_fn.env, macro_fn.params, MalList(arguments)))
     return ast
 
 
