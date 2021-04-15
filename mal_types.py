@@ -157,6 +157,9 @@ class MalSymbol(MalType):
     def __hash__(self):
         return hash(self.value)
 
+    def mal_repr(self, __):
+        return "'" + self.value
+
 
 class MalNil(MalType):
     _type_name = 'nil'

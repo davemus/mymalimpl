@@ -1,5 +1,6 @@
 #!/bin/python3
 
+import re
 import argparse
 from mal_readline import mal_readline
 from mal_types import MalType, MalSymbol, MalList, MalVector, MalHashmap, MalNil, MalBoolean, MalFunction, MalAtom
@@ -212,11 +213,22 @@ parser.add_argument('prog_args', nargs='*', help='Arguments passed to program')
 args = parser.parse_args()
 
 
+def preprocess_args(args):
+    processed = []
+    for arg in args:
+        if re.match(r'\d+', arg):
+            processed.append(arg)
+        else:
+            processed.append(f'"{arg}"')
+    return processed
+
+
 def main():
     setup_fns()
     if args.filename is not None:
         rep(f'(def! *FILENAME* "{args.filename}"')
-        rep(f'(def! *ARGS* {"(list " +  " ".join(args.prog_args) + ")" })')
+        cl_args = preprocess_args(args.prog_args)
+        rep(f'(def! *ARGS* {"(list " +  " ".join(cl_args) + ")" })')
         print(rep('(load-file *FILENAME*)'))
         if not args.interactive:
             return 0

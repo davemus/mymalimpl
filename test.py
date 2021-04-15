@@ -253,10 +253,6 @@ class Step6Test(Step5Test):
         with TestFile('test.mal', '(def! variable-from-file2 44)\nvariable-from-file2'):
             self.assertCLI(['./step6.py', 'test.mal'], '44')
 
-    def test_run_program_with_arguments(self):
-        with TestFile('test.mal', '(prn *ARGS*)'):
-            self.assertCLI(['./step6.py', 'test.mal', '1', '2', '3'], '(1 2 3)')
-
 
 class Step7Test(Step6Test):
     rep = staticmethod(rep7)
@@ -270,11 +266,11 @@ class Step7Test(Step6Test):
 
     def test_quote(self):
         self.myTest('(quote (1 2 3))', '(1 2 3)')
-        self.myTest('(quote undefined)', 'undefined')
+        self.myTest('(quote undefined)', '\'undefined')
 
     def test_quasiquote(self):
         self.rep('(def! nested (list 2 3))')
-        self.myTest('(quasiquote (1 nested 4))', '(1 nested 4)')
+        self.myTest('(quasiquote (1 nested 4))', '(1 \'nested 4)')
 
     def test_quasiquote_unquote(self):
         self.rep('(def! nested (list 2 3))')
@@ -286,11 +282,11 @@ class Step7Test(Step6Test):
 
     def test_shortcut_quote(self):
         self.myTest('\'(1 2 3))', '(1 2 3)')
-        self.myTest('\'undefined', 'undefined')
+        self.myTest('\'undefined', '\'undefined')
 
     def test_shortcut_quasiquote(self):
         self.rep('(def! nested (list 2 3))')
-        self.myTest('`(1 nested 4)', '(1 nested 4)')
+        self.myTest('`(1 nested 4)', '(1 \'nested 4)')
 
     def test_shortcut_quasiquote_unquote(self):
         self.rep('(def! nested (list 2 3))')
@@ -302,7 +298,7 @@ class Step7Test(Step6Test):
 
     def test_quote_vectors(self):
         self.rep('(def! nested (list 2 3))')
-        self.myTest('(quote [1 nested 4])', '[1 nested 4]')
+        self.myTest('(quote [1 nested 4])', '[1 \'nested 4]')
 
     def test_vec(self):
         self.myTest('(vec 1 2 3)', '[1 2 3]')
@@ -312,6 +308,10 @@ class Step7Test(Step6Test):
 
     def test_cons_vector(self):
         self.myTest('(cons 1 [2 3])', '(1 2 3)')
+
+    def test_run_program_with_arguments_different_types(self):
+        with TestFile('test.mal', '(prn *ARGS*)'):
+            self.assertCLI(['./step7.py', 'test.mal', '1', '2', '3', "string"], '(1 2 3 string)')
 
 
 if __name__ == '__main__':
