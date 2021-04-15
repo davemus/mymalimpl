@@ -8,6 +8,7 @@ from step4 import rep as rep4
 from step5 import rep as rep5
 from step6 import rep as rep6, setup_fns as set6
 from step7 import rep as rep7, setup_fns as set7
+from step8 import rep as rep8, setup_fns as set8
 from errors import MalTypeError, SpecialFormError, NotFound
 
 
@@ -312,6 +313,21 @@ class Step7Test(Step6Test):
     def test_run_program_with_arguments_different_types(self):
         with TestFile('test.mal', '(prn *ARGS*)'):
             self.assertCLI(['./step7.py', 'test.mal', '1', '2', '3', "string"], '(1 2 3 string)')
+
+
+class Step8Test(Step7Test):
+    rep = staticmethod(rep8)
+    setup = staticmethod(set8)
+
+    def test_when_macros(self):
+        self.rep('''
+        (define-macro when
+            (fn* (test . branch)
+            (list 'if test
+                (cons 'begin branch))))
+        ''')  # when macros has syntax (when /condition/ /action1/ /action2/ ... /actionN/)
+        self.rep('(define test 42)')
+        self.myTest('(when (test != 42) (def! test (+ test 1) (def! test (+ test 2) )))', '45')
 
 
 if __name__ == '__main__':
