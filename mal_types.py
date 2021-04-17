@@ -42,6 +42,7 @@ class MalType:
 
     __add__ = __sub__ = __mul__ = __truediv__ = not_implemented
     __gt__ = __ge__ = __lt__ = __le__ = not_implemented
+    __and__ = __or__ = not_implemented
 
 
 class MalNumber(MalType):
@@ -52,6 +53,9 @@ class MalNumber(MalType):
             self.value = int(value)
         else:
             self.value = value
+
+    def __index__(self):
+        return int(self.value)
 
     @classmethod
     def from_mal(cls, val):
@@ -141,6 +145,12 @@ class MalBoolean(MalType):
 
     def mal_repr(self, __):
         return self._repr[self.value]
+
+    def __and__(self, other):
+        return MalBoolean(self.value and other.value)
+
+    def __or__(self, other):
+        return MalBoolean(self.value or other.value)
 
 
 class MalSymbol(MalType):
@@ -256,12 +266,17 @@ class MalFunction(MalType):
         self.fn = fn
         self.is_macro = is_macro
 
+    def __repr__(self):
+        return f'MalFunction({repr(self.ast)}, {repr(self.params)}, {repr(self.env)}, {repr(self.fn)}, {self.is_macro})' # noqa
+
     @classmethod
     def from_mal(cls, value):
         raise NotImplementedError
 
-    def mal_repr(self, __):
-        return '#function'
+    def mal_repr(self, readability):
+        if not self.is_macro:
+            return '#function'
+        return '#macro ' + self.ast.mal_repr(readability)
 
 
 class MalAtom(MalType):

@@ -319,15 +319,40 @@ class Step8Test(Step7Test):
     rep = staticmethod(rep8)
     setup = staticmethod(set8)
 
-    def test_when_macros(self):
-        self.rep('''
-        (defmacro! when
-            (fn* (test . branch)
-            (list 'if test
-                (cons 'begin branch))))
-        ''')  # when macros has syntax (when /condition/ /action1/ /action2/ ... /actionN/)
-        self.rep('(define test 42)')
-        self.myTest('(when (test != 42) (def! test (+ test 1) (def! test (+ test 2) )))', '45')
+    def test_and(self):
+        self.myTest('(and true false)', 'false')
+        self.myTest('(and true true)', 'true')
+        self.myTest('(and true true true false)', 'false')
+
+    def test_or(self):
+        self.myTest('(or true false)', 'true')
+        self.myTest('(or false false)', 'false')
+        self.myTest('(or false false false true)', 'true')
+
+    def test_very_simple_macros(self):
+        self.rep('(defmacro! remove-code (fn* (& args) nil))')
+        self.myTest('(remove-code (+ undefined undefined))', 'nil')
+
+    def test_unless_macros(self):
+        self.rep('(defmacro! unless (fn* (pred a b) `(if ~pred ~b ~a)))')
+        self.myTest('(unless false 7 8)', '7')
+
+    def test_unless2_macros(self):
+        self.rep('(defmacro! unless2 (fn* (pred a b) (list \'if (list \'not pred) a b)))')
+        self.myTest('(unless2 false 7 8)', '7')
+        self.myTest('(unless2 true 7 8)', '8')
+
+    def test_first_rest_with_empty_list(self):
+        self.myTest('(first ())', 'nil')
+        self.myTest('(rest ())', '()')
+
+    def test_nth(self):
+        self.myTest('(nth (list 1 2 3) 2)', '3')
+        self.myTest('(nth (list 1 2 3) 1)', '2')
+        self.myTest('(nth (list 1 2 3) 0)', '1')
+
+    def test_nth_with_invalid_index(self):
+        self.myTest('(nth (list 1 2 3) 4)', 'nil')
 
 
 if __name__ == '__main__':

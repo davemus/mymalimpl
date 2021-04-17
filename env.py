@@ -37,6 +37,9 @@ class Env:
         return env._scope[name]
 
     def __str__(self):
+        return '#environment'
+
+    def debug_repr(self):
         level = 0
         scope = self
         while scope._outer is not None:

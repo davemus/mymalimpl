@@ -1,6 +1,6 @@
 from typing import List
 from functools import reduce
-from operator import add, sub, mul, truediv, eq, ge, le, gt, lt
+from operator import add, sub, mul, truediv, eq, ge, le, gt, lt, and_, or_
 from mal_types import (
     MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil, MalType, MalVector
 )
@@ -51,6 +51,13 @@ def concat(*args: MalList) -> MalList:
     return MalList(list_)
 
 
+def nth(iterable, idx):
+    try:
+        return iterable.value[idx]
+    except IndexError:
+        return MalNil(None)
+
+
 def set_up_new_global_env() -> Env:
     repl_env = Env()
     repl_env.set(MalSymbol('+'), fn_many_arg(add))
@@ -73,7 +80,8 @@ def set_up_new_global_env() -> Env:
         lambda *args: MalBoolean(len(args[0]) == 0)
     )
     repl_env.set(MalSymbol('not'), lambda arg: MalBoolean(not arg))
-    repl_env.set(MalSymbol('first'), lambda arg: arg.value[0])
+    repl_env.set(MalSymbol('nth'), nth)
+    repl_env.set(MalSymbol('first'), lambda arg: nth(arg, MalNumber(0)))
     repl_env.set(MalSymbol('rest'), lambda arg: arg.__class__(arg.value[1:]))
     repl_env.set(MalSymbol('pr-str'), pr_defis_str)
     repl_env.set(MalSymbol('str'), _str)
@@ -84,6 +92,8 @@ def set_up_new_global_env() -> Env:
     repl_env.set(MalSymbol('cons'), cons)
     repl_env.set(MalSymbol('concat'), concat)
     repl_env.set(MalSymbol('vec'), lambda *args: MalVector(args))
+    repl_env.set(MalSymbol('and'), fn_many_arg(and_))
+    repl_env.set(MalSymbol('or'), fn_many_arg(or_))
     return repl_env
 
 

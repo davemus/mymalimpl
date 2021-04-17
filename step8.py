@@ -11,6 +11,7 @@ from core import repl_env
 from errors import MalTypeError, NotFound, SpecialFormError
 from functools import reduce
 from env import Env
+from logger import log_function
 
 
 def eval_ast(ast: MalType, env: Env):
@@ -53,6 +54,7 @@ CONS_SYMBOL = MalSymbol('cons')
 VEC_SYMBOL = MalSymbol('vec')
 
 
+@log_function
 def EVAL(ast: MalType, env: Env):
     while True:
         # not list rule of evaluation
@@ -63,10 +65,13 @@ def EVAL(ast: MalType, env: Env):
         elif not ast.value:
             return ast
 
+        # macroexpand for macroses
         else:
             ast = macroexpand(ast, env)
             if not isinstance(ast, MalList):
                 return eval_ast(ast, env)
+            elif not ast.value:
+                return ast
 
         # defining things
         if ast.value[0] == DEF_SYMBOL:
@@ -141,9 +146,10 @@ def EVAL(ast: MalType, env: Env):
         elif ast.value[0] == QUOTE_SYMBOL:
             return ast.value[1]
 
-        # unquoting element
+        # quasiquoting element
         elif ast.value[0] == QUASIQUOTE_SYMBOL:
             ast = quasiquote(ast.value[1])
+            continue
 
         elif ast.value[0] == DEFMACRO_SYMBOL:
             try:
@@ -153,14 +159,14 @@ def EVAL(ast: MalType, env: Env):
                     raise ValueError
             except ValueError:
                 raise SpecialFormError('defmacro! syntax is (def! /symbol/ /function_body/)')
-            fn = MalFunction(ast, binds, env, None, True)  # fn.fn is set to None. Check in step 9 is it ok
+            fn = MalFunction(body, binds, env, None, True)  # fn.fn is set to None. Check in step 9 is it ok
             env.set(symbol, fn)
             return MalNil(None)
 
         # apply/invoke function
         func, *args = eval_ast(ast, env).value
-        if not isinstance(func, MalFunction):
-            # core function
+        if not isinstance(func, MalFunction) and callable(func):
+            # function defined in python
             return func(*args)
         ast = func.ast
         env = Env(func.env, func.params, args)
@@ -223,7 +229,7 @@ def is_macro_call(ast, env):
             isinstance(ast, MalList)
             and isinstance(ast.value[0], MalSymbol)
             and env.get(ast.value[0]).is_macro
-        )
+        )  # function, that is macros
     except (AttributeError, NotFound):
         return False
 
@@ -232,7 +238,8 @@ def macroexpand(ast, env):
     while is_macro_call(ast, env):
         fn_name, *arguments = ast.value
         macro_fn = env.get(fn_name)
-        ast = EVAL(macro_fn.ast, Env(macro_fn.env, macro_fn.params, MalList(arguments)))
+        new_env = Env(macro_fn.env, macro_fn.params, MalList(arguments))
+        ast = EVAL(macro_fn.ast, new_env)
     return ast
 
 
@@ -241,7 +248,7 @@ def setup_fns():
     repl_env.set(MalSymbol('atom'), lambda arg: MalAtom(arg))
     repl_env.set(MalSymbol('atom?'), lambda arg: MalBoolean(isinstance(arg, MalAtom)))
     repl_env.set(MalSymbol('deref'), deref)
-    rep('(def! load-file (fn* (f) (eval (read-string (pr-str "(do" (slurp f) ")")))))')
+    rep('(def! load-file (fn* (f) (eval (read-string (pr-str "(do" (slurp f) "nil)")))))')
     repl_env.set(MalSymbol('reset!'), reset)
     repl_env.set(MalSymbol('swap!'), swap)
 
