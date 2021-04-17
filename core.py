@@ -2,7 +2,8 @@ from typing import List
 from functools import reduce
 from operator import add, sub, mul, truediv, eq, ge, le, gt, lt, and_, or_
 from mal_types import (
-    MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil, MalType, MalVector
+    MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil, MalType, MalVector, MalHashmap,
+    MalKeyword,
 )
 from env import Env
 from reader import read_str
@@ -92,8 +93,38 @@ def set_up_new_global_env() -> Env:
     repl_env.set(MalSymbol('cons'), cons)
     repl_env.set(MalSymbol('concat'), concat)
     repl_env.set(MalSymbol('vec'), lambda *args: MalVector(args))
+    repl_env.set(MalSymbol('vector'), lambda *args: MalVector(args))
+    repl_env.set(MalSymbol('vector?'), lambda arg: MalBoolean(isinstance(arg, MalVector)))
     repl_env.set(MalSymbol('and'), fn_many_arg(and_))
     repl_env.set(MalSymbol('or'), fn_many_arg(or_))
+    repl_env.set(MalSymbol('nil?'), lambda x: isinstance(x, MalNil))
+    repl_env.set(MalSymbol('false?'), lambda x: x == MalBoolean(False))
+    repl_env.set(MalSymbol('true?'), lambda x: x == MalBoolean(True))
+    repl_env.set(MalSymbol('symbol'), lambda x: MalSymbol(x.value))
+    repl_env.set(MalSymbol('symbol?'), lambda x: MalBoolean(isinstance(x, MalSymbol)))
+    repl_env.set(MalSymbol('keyword'), lambda x: MalKeyword(':' + x.value))
+    repl_env.set(MalSymbol('keyword?'), lambda x: MalBoolean(isinstance(x, MalKeyword)))
+    repl_env.set(MalSymbol('hash-map'), lambda *args: MalHashmap(args))
+    repl_env.set(MalSymbol('map?'), lambda arg: MalBoolean(isinstance(arg, MalHashmap)))
+    repl_env.set(
+        MalSymbol('assoc'),
+        lambda hashmap, *args: MalHashmap(
+            [
+                *reduce(add, [[k, v] for k, v in hashmap.value.items()], []),
+                *args,
+            ]
+        )
+    )
+    repl_env.set(
+        MalSymbol('dissoc'),
+        lambda hashmap, *keys_to_remove: MalHashmap(
+            reduce(lambda a, b: a + b, [[k, v] for k, v in hashmap.value.items() if k not in keys_to_remove], [])
+        )
+    )
+    repl_env.set(MalSymbol('get'), lambda hashmap, key: hashmap.value.get(key, MalNil(None)))
+    repl_env.set(MalSymbol('contains?'), lambda hashmap, key: MalBoolean(key in hashmap.value))
+    repl_env.set(MalSymbol('keys'), lambda hashmap: MalList(list(hashmap.value.keys())))
+    repl_env.set(MalSymbol('values'), lambda hashmap: MalList(list(hashmap.value.values())))
     return repl_env
 
 

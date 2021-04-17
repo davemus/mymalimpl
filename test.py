@@ -371,6 +371,46 @@ class Step9Test(Step8Test):
     def test_apply(self):
         self.myTest('(apply pr-str 1 2 \'(3 4) 5)', '1 2 3 4 5')
 
+    def test_symbol(self):
+        self.myTest('(symbol? (symbol "spam"))', 'true')
+        self.myTest('(symbol? \'spam)', 'true')
+        self.myTest('(symbol? "spam")', 'false')
+
+    def test_vector(self):
+        self.myTest('(vector? (vector 1 2 3))', 'true')
+        self.myTest('(vector? [1 2 3])', 'true')
+        self.myTest('(vector? \'(1 2 3)', 'false')
+
+    def test_hash_map(self):
+        self.myTest('(map? (hash-map "1" 2))', 'true')
+        self.myTest('(map? {"1" 2})', 'true')
+        self.myTest('(map? [1 2])', 'false')
+
+    def test_keys_values(self):
+        self.rep('(def! mymap {"1" 2 "3" 4})')
+        self.myTest('(keys mymap)', '(1 3)')
+        self.myTest('(values mymap)', '(2 4)')
+
+    def test_get_contains(self):
+        self.rep('(def! mymap {"1" 2 "3" 4})')
+        self.myTest('(contains? mymap "1")', 'true')
+        self.myTest('(contains? mymap "2")', 'false')
+        self.myTest('(get mymap "1")', '2')
+        self.myTest('(get mymap "2")', 'nil')
+
+    def test_assoc_dissoc(self):
+        self.rep('(def! mymap {"1" 2 "3" 4})')
+        self.rep('(def! shortmap (dissoc mymap "3"))')
+        self.rep('(def! longmap (assoc mymap "5" 6))')
+        self.myTest('mymap', '{1 2, 3 4}')
+        self.myTest('shortmap', '{1 2}')
+        self.myTest('longmap', '{1 2, 3 4, 5 6}')
+
+    def test_keyword(self):
+        self.myTest('(keyword? (keyword "a"))', 'true')
+        self.myTest('(keyword? :a)', 'true')
+        self.myTest('(keyword? "a")', 'false')
+
 
 if __name__ == '__main__':
     unittest.main()

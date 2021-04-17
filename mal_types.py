@@ -128,6 +128,9 @@ class MalString(MalType):
             return self.value
         return self.value.encode().decode('unicode-escape')
 
+    def __hash__(self):
+        return hash(self.value)
+
 
 class MalBoolean(MalType):
     _type_name = 'boolean'
