@@ -1,13 +1,12 @@
 import re
 from typing import List, Union
-from errors import MalTypeError
 
 
 def not_implemented(self, other):
     raise MalTypeError(f'wrong argument type {self._type_name}')
 
 
-class MalType:
+class MalType(Exception):
     def __init__(self, value):
         self.value = value
 
@@ -43,6 +42,9 @@ class MalType:
     __add__ = __sub__ = __mul__ = __truediv__ = not_implemented
     __gt__ = __ge__ = __lt__ = __le__ = not_implemented
     __and__ = __or__ = not_implemented
+
+
+MalTypeError = SpecialFormError = NotFound = MalType  # stub for previous steps
 
 
 class MalNumber(MalType):
@@ -255,8 +257,6 @@ class MalHashmap(MalType):
 
 atoms_order = [MalBoolean, MalNumber, MalNil, MalKeyword, MalString, MalSymbol]
 
-Sequential = Union[MalList, MalVector, MalHashmap]
-
 
 class MalFunction(MalType):
     def __init__(self, ast, params, env, fn, is_macro=False):
@@ -290,3 +290,6 @@ class MalAtom(MalType):
 
     def mal_repr(self, readability):
         return '#atom: ' + self.value.mal_repr(readability)
+
+
+Sequential = Union[MalIterable, MalHashmap]

@@ -9,10 +9,12 @@ from step5 import rep as rep5
 from step6 import rep as rep6, setup_fns as set6
 from step7 import rep as rep7, setup_fns as set7
 from step8 import rep as rep8, setup_fns as set8
-from errors import MalTypeError, SpecialFormError, NotFound
+from step9 import rep as rep9, setup_fns as set9
+from mal_types import MalType
+from errors import MalTypeError, NotFound
 
 
-SKIP_LONG_TESTS = False
+SKIP_TCO_TEST = True
 
 
 class Step2Test(unittest.TestCase):
@@ -65,11 +67,11 @@ class Step3Test(Step2Test):
         self.myTest('(let* (c 2) c)', '2')
 
     def test_wrong_called_def(self):
-        with self.assertRaises(SpecialFormError):
+        with self.assertRaises(MalType):
             self.rep('(def! a)')
 
     def test_wrong_called_let(self):
-        with self.assertRaises(SpecialFormError):
+        with self.assertRaises(MalType):
             self.rep('(let* (a) a)')
 
     def test_access_not_bound_symbol(self):
@@ -90,7 +92,7 @@ class Step4Test(Step3Test):
         self.myTest('( (fn* (a b) (/ (+ a b) 2)) 2 4 )', '3')
 
     def test_call_function_wrong_number_of_args(self):
-        with self.assertRaises((SpecialFormError, ValueError)):
+        with self.assertRaises((MalType, ValueError)):
             self.rep('( (fn* (a b) (+ a b)) 4 )')
 
     def test_function_can_be_stored_in_env(self):
@@ -181,13 +183,13 @@ class Step4Test(Step3Test):
 class Step5Test(Step4Test):
     rep = staticmethod(rep5)
 
-    @unittest.skipIf(SKIP_LONG_TESTS, 'This test is disabled for debug')
+    @unittest.skipIf(SKIP_TCO_TEST, 'This test is disabled due to performance issues')
     def test_tco(self):
         self.rep('(def! sum2 (fn* (n acc) (if (= n 0) acc (sum2 (- n 1) (+ n acc)))))')  # noqa
         self.myTest('(sum2 10 0)', '55')
         self.myTest('(sum2 10000 0)', '50005000')
 
-    @unittest.skipIf(SKIP_LONG_TESTS, 'This test is disabled for debug')
+    @unittest.skipIf(SKIP_TCO_TEST, 'This test is disabled due to performance issues')
     def test_tco_2(self):
         self.rep('(def! foo (fn* (n) (if (= n 0) 0 (bar (- n 1)))))')
         self.rep('(def! bar (fn* (n) (if (= n 0) 0 (foo (- n 1)))))')
@@ -353,6 +355,21 @@ class Step8Test(Step7Test):
 
     def test_nth_with_invalid_index(self):
         self.myTest('(nth (list 1 2 3) 4)', 'nil')
+
+
+class Step9Test(Step8Test):
+    rep = staticmethod(rep9)
+    setup = staticmethod(set9)
+
+    def test_throw_try_catch(self):
+        self.myTest('(try* (do (throw "2") "1") (catch* excepted excepted))', "2")
+
+    def test_map(self):
+        self.myTest('(map (fn* [arg] (+ arg 1)) (list 1 2 3))', '(2 3 4)')
+        self.myTest('(map (fn* [arg] (* arg 2)) [1 2 3])', '(2 4 6)')
+
+    def test_apply(self):
+        self.myTest('(apply pr-str 1 2 \'(3 4) 5)', '1 2 3 4 5')
 
 
 if __name__ == '__main__':
