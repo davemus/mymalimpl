@@ -270,6 +270,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-i', '--interactive', action='store_true')
 parser.add_argument('filename', nargs='?', help='Filename to be executed')
 parser.add_argument('prog_args', nargs='*', help='Arguments passed to program')
+parser.add_argument('--prompt', nargs='?', help='Prompt to show to user')
+parser.add_argument('--disable-header', action='store_true')
 args = parser.parse_args()
 
 
@@ -282,9 +284,10 @@ if __name__ == '__main__':
         if not args.interactive:
             exit(0)
     else:
-        rep("""(println (str "Mal [" *host-language* "]"))""")
+        if not args.disable_header:
+            rep("""(println (str "Mal [" *host-language* "]"))""")
     while True:
-        inp = input('user> ')
+        inp = input(args.prompt or 'user> ')
         try:
             res = rep(inp)
         except MalException as e:
