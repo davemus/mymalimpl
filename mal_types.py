@@ -1,298 +1,185 @@
-import re
-from typing import List, Union
+from copy import copy
+
+# atomic types
+NIL = None
+is_nil = lambda entity: entity is NIL
+
+TRUE = True
+FALSE = False
+is_bool = lambda entity: isinstance(entity, bool)
+is_true = lambda entity: entity is TRUE
+is_false = lambda entity: entity is FALSE
+
+
+def make_number(str_):
+    try:
+        if float(str_) != int(str_):
+            return float(str_)
+        return int(str_)
+    except Exception:
+        return float(str_)
+is_number = lambda entity: isinstance(entity, (int, float)) and not is_bool(entity)
+
+make_keyword = lambda str_: str_ if is_keyword(str_) else u"\u029e" + str(str_.lstrip(':'))
+is_keyword = lambda entity: isinstance(entity, str) and entity.startswith(u"\u029e")
+
+def make_string(str_):  # noqa
+    return (
+        str_[1:-1]
+        .replace('\\\\', u'\u029e')
+        .replace('\\n', '\n')
+        .replace('\\"', '"')
+        .replace(u'\u029e', '\\')
+    )
+is_string = lambda entity: isinstance(entity, str) and not is_keyword(entity)  # noqa
+
+make_symbol = lambda str_: bytes(str_, encoding='utf-8')
+is_symbol = lambda entity: isinstance(entity, bytes)
+
+
+class MalWithMetaMixin:
+    meta = NIL
+can_have_metadata = lambda entity: isinstance(entity, MalWithMetaMixin) or is_function(entity)  # noqa
+
+
+# compound types
+class MalList(list, MalWithMetaMixin): pass  # noqa
+make_list = lambda entity: MalList(entity)  # noqa
+is_list = lambda entity: isinstance(entity, MalList) and not is_atom(entity)
+
+class MalVector(tuple, MalWithMetaMixin): pass  # noqa
+make_vector = lambda entity: MalVector(entity)  # noqa
+make_vector_vargs = lambda *args: make_vector(args)
+is_vector = lambda entity: isinstance(entity, MalVector)
+
+class MalHashmap(dict, MalWithMetaMixin): pass  # noqa
+make_hashmap = lambda iterable: MalHashmap(zip(iterable[0::2], iterable[1::2]))  # noqa
+make_hashmap_vargs = lambda *args: make_hashmap(args)
+make_hashmap_from_pydict = lambda x: MalHashmap(x)
+is_hashmap = lambda entity: isinstance(entity, MalHashmap)
+keys = lambda entity: make_list(entity.keys())
+values = lambda entity: make_list(entity.values())
+get = lambda entity, key: entity.get(key, NIL) if is_hashmap(entity) else NIL
+contains = lambda hashmap, key: key in hashmap.keys()
+def assoc(hashmap, *items):  # noqa
+    return make_hashmap_from_pydict({**hashmap, **{k: v for k, v in zip(items[0::2], items[1::2])}})
+def dissoc(hashmap, *items):  # noqa
+    return make_hashmap_from_pydict({k: v for k, v in hashmap.items() if k not in items})
+
+
+class function(MalWithMetaMixin):
+    __slots__ = ['ast', 'params', 'env', 'fn', 'is_macro', 'meta']
+
+    def __copy__(self):
+        copy_fn = function(
+            copy(self.ast),
+            copy(self.params),
+            copy(self.env),
+            copy(self.fn),
+            copy(self.is_macro),
+        )
+        copy_fn.meta = copy(self.meta)
+        return copy_fn
 
-
-def not_implemented(self, other):
-    raise MalTypeError(f'wrong argument type {self._type_name}')
-
-
-class MalType(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __call__(self, *args):
-        raise MalTypeError(f'{self.value} is not a function')
-
-    @property
-    def _type_name(self) -> str:
-        raise NotImplementedError
-
-    @classmethod
-    def from_mal(cls, val: str) -> 'MalType':
-        raise NotImplementedError
-
-    @classmethod
-    def can_be_converted(cls, value: str) -> bool:
-        raise NotImplementedError
-
-    def __eq__(self, other):
-        if not isinstance(other, MalType):
-            return MalBoolean(False)
-        return MalBoolean(self.value == other.value)
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({repr(self.value)})'
-
-    def __hash__(self):
-        raise MalTypeError(f'{self.value} can\'t be used as key')
-
-    def mal_repr(self, readable) -> str:
-        return str(self.value)
-
-    __add__ = __sub__ = __mul__ = __truediv__ = not_implemented
-    __gt__ = __ge__ = __lt__ = __le__ = not_implemented
-    __and__ = __or__ = not_implemented
-
-
-MalTypeError = SpecialFormError = NotFound = MalType  # stub for previous steps
-
-
-class MalNumber(MalType):
-    _type_name = 'number'
-
-    def __init__(self, value):
-        if int(value) == float(value):
-            self.value = int(value)
-        else:
-            self.value = value
-
-    def __index__(self):
-        return int(self.value)
-
-    @classmethod
-    def from_mal(cls, val):
-        try:
-            conversed = int(val)
-        except ValueError:
-            conversed = float(val)
-        return MalNumber(conversed)
-
-    @classmethod
-    def can_be_converted(cls, value):
-        return re.match(r'^\d+(\.\d*)?$', value)
-
-    def __add__(self, other):
-        if not isinstance(other, MalNumber):
-            return not_implemented(self, other)
-        return MalNumber(self.value + other.value)
-
-    def __sub__(self, other):
-        if not isinstance(other, MalNumber):
-            return not_implemented(self, other)
-        return MalNumber(self.value - other.value)
-
-    def __mul__(self, other):
-        if not isinstance(other, MalNumber):
-            return not_implemented(self, other)
-        return MalNumber(self.value * other.value)
-
-    def __truediv__(self, other):
-        if not isinstance(other, MalNumber):
-            return not_implemented(self, other)
-        return MalNumber(self.value / other.value)
-
-    def __gt__(self, other):
-        if not isinstance(other, MalNumber):
-            return not_implemented(self, other)
-        return MalBoolean(self.value > other.value)
-
-    def __ge__(self, other):
-        if not isinstance(other, MalNumber):
-            return not_implemented(self, other)
-        return MalBoolean(self.value >= other.value)
-
-    def __lt__(self, other):
-        if not isinstance(other, MalNumber):
-            return not_implemented(self, other)
-        return MalBoolean(self.value < other.value)
-
-    def __le__(self, other):
-        if not isinstance(other, MalNumber):
-            return not_implemented(self, other)
-        return MalBoolean(self.value <= other.value)
-
-
-class MalString(MalType):
-    _type_name = 'string'
-
-    @classmethod
-    def from_mal(cls, value):
-        return MalString(str(value[1:-1]))
-
-    @classmethod
-    def can_be_converted(cls, value):
-        return re.match(r"""(".*")""", value)
-
-    def mal_repr(self, readable):
-        if readable:
-            return self.value
-        return self.value.encode().decode('unicode-escape')
-
-    def __hash__(self):
-        return hash(self.value)
-
-
-class MalBoolean(MalType):
-    _type_name = 'boolean'
-    _possible_reprs = {'true': True, 'false': False}
-    _repr = {True: 'true', False: 'false'}
-
-    def __bool__(self):
-        return bool(self.value)
-
-    @classmethod
-    def from_mal(cls, value):
-        return MalBoolean(cls._possible_reprs[value])
-
-    @classmethod
-    def can_be_converted(cls, value):
-        return value in cls._possible_reprs
-
-    def mal_repr(self, __):
-        return self._repr[self.value]
-
-    def __and__(self, other):
-        return MalBoolean(self.value and other.value)
-
-    def __or__(self, other):
-        return MalBoolean(self.value or other.value)
-
-
-class MalSymbol(MalType):
-    _type_name = 'symbol'
-
-    @classmethod
-    def from_mal(cls, value):
-        return MalSymbol(str(value))
-
-    @classmethod
-    def can_be_converted(cls, value):
-        return True
-
-    def __hash__(self):
-        return hash(self.value)
-
-    def mal_repr(self, __):
-        return "'" + self.value
-
-
-class MalNil(MalType):
-    _type_name = 'nil'
-    _nil_repr = 'nil'
-
-    @classmethod
-    def from_mal(cls, __):
-        return MalNil(None)
-
-    @classmethod
-    def can_be_converted(cls, value):
-        return value == cls._nil_repr
-
-    def mal_repr(self, __):
-        return self._nil_repr
-
-
-class MalKeyword(MalType):
-    _type_name = 'keyword'
-
-    @classmethod
-    def from_mal(cls, value: str):
-        return MalKeyword(value)
-
-    @classmethod
-    def can_be_converted(cls, value: str):
-        return value[0] == ':'
-
-    def __hash__(self):
-        return hash(self.value)
-
-
-class MalIterable(MalType):
-    def __len__(self):
-        return len(self.value)
-
-    def __contains__(self, value):
-        return value in self.value
-
-    def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return MalBoolean(False)
-        if len(other) != len(self):
-            return MalBoolean(False)
-        return MalBoolean(all(
-            a == b for a, b in zip(self.value, other.value)
-        ))
-
-    def __getitem__(self, idx):
-        return self.value[idx]
-
-
-class MalList(MalIterable):
-    _type_name = 'list'
-
-    def mal_repr(self, readable):
-        return f"({' '.join(atom.mal_repr(readable) for atom in self.value)})"
-
-
-class MalVector(MalIterable):
-    _type_name = 'vector'
-
-    def mal_repr(self, readable):
-        return f"[{' '.join(atom.mal_repr(readable) for atom in self.value)}]"
-
-
-class MalHashmap(MalType):
-    _type_name = 'hashmap'
-
-    def __init__(self, value: List[MalType]):
-        self.value = dict(zip(value[0::2], value[1::2]))
-
-    def mal_repr(self, readable):
-        list_of_elem = [
-            f'{key.mal_repr(readable)} {value.mal_repr(readable)}'
-            for key, value in self.value.items()
-        ]
-        return "{" + ', '.join(list_of_elem) + "}"
-
-    def __eq__(self, other):
-        return MalBoolean(False)
-
-
-atoms_order = [MalBoolean, MalNumber, MalNil, MalKeyword, MalString, MalSymbol]
-
-
-class MalFunction(MalType):
     def __init__(self, ast, params, env, fn, is_macro=False):
         self.ast = ast
         self.params = params
         self.env = env
         self.fn = fn
         self.is_macro = is_macro
+        self.meta = NIL
+make_function = function  # noqa
+is_mal_function = lambda entity: isinstance(entity, function)
+is_function = lambda entity: callable(entity) or is_mal_function(entity)
 
-    def __repr__(self):
-        return f'MalFunction({repr(self.ast)}, {repr(self.params)}, {repr(self.env)}, {repr(self.fn)}, {self.is_macro})' # noqa
-
-    @classmethod
-    def from_mal(cls, value):
-        raise NotImplementedError
-
-    def mal_repr(self, readability):
-        if not self.is_macro:
-            return '#function'
-        return '#macro ' + self.ast.mal_repr(readability)
+_atom_mark = 'atom'
+atom = lambda value: make_list([_atom_mark, value])
+make_atom = atom
+is_atom = lambda entity: isinstance(entity, list) and len(entity) == 2 and entity[0] == _atom_mark
 
 
-class MalAtom(MalType):
-    """MalAtom is a type, that holds reference to other mal_type"""
-    def __init__(self, value: MalType):
-        self.value = value
-
-    @classmethod
-    def from_mal(cls, value: str):
-        raise NotImplementedError
-
-    def mal_repr(self, readability):
-        return '#atom: ' + self.value.mal_repr(readability)
+def deref(entity):
+    if is_atom(entity):
+        return entity[1]
+    return NIL
 
 
-Sequential = Union[MalIterable, MalHashmap]
+def reset(entity, value):
+    if is_atom(entity):
+        entity[1] = value
+        return value
+    return NIL
+
+
+def swap(entity, fn, *args):
+    if not is_atom(entity):
+        raise TypeError('swap! first argument should be atom')
+    if is_mal_function(fn):
+        fn = fn.fn
+    new_value = fn(entity[1], *args)
+    entity[1] = new_value
+    return new_value
+
+
+def items(entity):
+    if is_hashmap(entity):
+        return entity.items()
+    raise TypeError
+
+
+is_iterable = lambda entity: any(is_a(entity) for is_a in (is_list, is_vector))
+
+
+def is_empty(entity):
+    if is_iterable(entity):
+        return not entity
+    raise TypeError
+
+
+def iterate(entity):
+    if is_iterable(entity):
+        return entity
+    raise TypeError
+
+
+def first(entity):
+    if is_iterable(entity) and entity:
+        return entity[0]
+    return NIL
+
+
+def rest(entity):
+    if is_iterable(entity) and entity:
+        return make_list(entity[1:])
+    return make_list([])
+
+
+def nth(entity, n):
+    if is_iterable(entity):
+        try:
+            return entity[n]
+        except IndexError:
+            raise MalException('Index is beyond bounds')
+    return NIL
+
+
+def count(entity):
+    if is_iterable(entity):
+        return len(entity)
+    return 0
+
+
+def cons(element, sequence):
+    return make_list([element, *sequence])
+
+
+def concat(*sequences):
+    joined = []
+    for sequence in sequences:
+        joined += sequence
+    return make_list(joined)
+
+
+def init_save_value(self, value):
+    self.value = value
+MalException = type('MalException', (Exception,), {'__init__': init_save_value})  # noqa

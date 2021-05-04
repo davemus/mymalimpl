@@ -1,3 +1,9 @@
 It's a studying project. Goal of project - is implementation of [mal language](https://github.com/kanaka/mal).
 
-I decided to stop coding it. The reason is I don't use tests from main repository, and now in stepA (self-hosting) it is hard to debug it. I learned a lot, but I understand that **really** wants to write interpreter, so I started it anew in [my fork of mal](https://github.com/davemus/mal).
+I restarted project and, finally, finished it. You can find history of my implementation in my [fork of
+mal](https://github.com/davemus/mal). Here is only final files.
+
+My variant of mal completes (as of 2021-05-04) all main tests and optional except:
+
+* 3 optional tests in stepA
+* all optional tests, related to quasiquote special form, that is needed only for debug

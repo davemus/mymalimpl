@@ -1,0 +1,35 @@
+(def! average (fn* [v1 v2] (/ (+ v1 v2) 2)))
+
+(def! square (fn* [n] (* n n)))
+
+(def! abs (fn* [n] (if (< n 0) (- 0 n) n)))
+
+(def! sqrt (fn* [n]
+  (do
+  (def! improve (fn* [guess]
+     (average guess (/ n guess))))
+  (def! good-enough? (fn* [guess]
+     (< (abs (- (square guess) n)) 0.0000000001)))
+  (def! tryit (fn* [guess]
+     (if (good-enough? guess)
+        guess
+        (tryit (improve guess)))))
+  (tryit 1))))
+
+(def!
+  quad-solver
+  (fn*
+    [a b c]
+    (let*
+      (D (- (* b b) (* (* 4 a) c)))
+      (cond
+        (< D 0) nil
+        (= D 0) (list (/ (- 0 b) (* 2 a) ))
+        (> D 0) (list
+          (/ (+ (- 0 b) (sqrt D)) (* 2 a))
+          (/ (- (- 0 b) (sqrt D)) (* 2 a))
+          )
+        )
+      )
+    )
+  )

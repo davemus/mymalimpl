@@ -1,131 +1,189 @@
-from typing import List
-from functools import reduce
-from operator import add, sub, mul, truediv, eq, ge, le, gt, lt, and_, or_
-from mal_types import (
-    MalSymbol, MalList, MalNumber, MalBoolean, MalString, MalNil, MalType, MalVector, MalHashmap,
-    MalKeyword,
+from copy import copy
+from time import time
+from operator import (
+    add, sub, mul, truediv, lt, le, gt, ge
 )
-from env import Env
+from printer import pr_str
 from reader import read_str
-
-
-def fn_many_arg(op):
-    def func(*args):
-        return reduce(op, args)
-    return func
-
-
-def pr_defis_str(*args):
-    return MalString(" ".join(arg.mal_repr(True) for arg in args))
-
-
-def _str(*args):
-    return MalString(r" ".join(arg.mal_repr(False) for arg in args))
+from mal_types import (
+    make_list, is_list, NIL, is_empty, count,
+    is_iterable, make_symbol, is_symbol,
+    make_atom, is_atom, deref, swap, reset,
+    cons, concat, make_vector, is_vector, make_vector_vargs,
+    first, rest, nth,
+    is_nil, is_true, is_false, make_keyword, is_keyword,
+    is_hashmap, keys, values, contains, get,
+    make_hashmap_vargs, assoc, dissoc, make_string,
+    is_string, is_function, is_number, is_mal_function,
+    make_hashmap_from_pydict, make_number, can_have_metadata,
+)
 
 
 def prn(*args):
-    print(pr_defis_str(*args).mal_repr(True))
-    return MalNil(None)
+    print(" ".join(pr_str(arg, True) for arg in args))
+    return NIL
 
 
-def _println(*args):
-    print(_str(*args).mal_repr(False))
-    return MalNil(None)
+def println(*args):
+    print(" ".join(pr_str(arg, False) for arg in args))
+    return NIL
 
 
-def read_defis_string(mal_str: MalString) -> MalType:
-    return read_str(mal_str.value)
+def pr_str_(*args):
+    string = " ".join(pr_str(arg, True) for arg in args)
+    return string
 
 
-def slurp(filename: MalString) -> MalString:
-    with open(filename.value, 'r') as f:
-        return MalString(f.read().strip())
+def str_(*args):
+    string = "".join(pr_str(arg, False) for arg in args)
+    return string
 
 
-def cons(elem: MalType, list_: MalList) -> MalList:
-    return MalList([elem, *list_.value])
+def equal(op1, op2):
+    if is_iterable(op1) and is_iterable(op2):  # list and vector are equal in tests =(
+        if count(op1) != count(op2):
+            return False
+        return all(
+            equal(el1, el2) for (el1, el2) in zip(op1, op2)
+        )
+    if is_hashmap(op1) and is_hashmap(op2):
+        if set(keys(op1)) != set(keys(op2)):
+            return False
+        return all(equal(op1[key], op2[key]) for key in keys(op1))
+    return type(op1) == type(op2) and op1 == op2
 
 
-def concat(*args: MalList) -> MalList:
-    list_of_lists = [list(arg.value) for arg in args]
-    list_: List[MalType] = reduce(add, list_of_lists, [])
-    return MalList(list_)
+def slurp(filename):
+    strip_comments = lambda line: line.split(';')[0]
+    with open(filename) as f:
+        contents = ' '.join(strip_comments(line) for line in f if line)
+    return contents
 
 
-def nth(iterable, idx):
+def mal_readline(prompt):
     try:
-        return iterable.value[idx]
-    except IndexError:
-        return MalNil(None)
+        return input(prompt)
+    except EOFError:
+        return NIL
 
 
-def set_up_new_global_env() -> Env:
-    repl_env = Env()
-    repl_env.set(MalSymbol('+'), fn_many_arg(add))
-    repl_env.set(MalSymbol('-'), fn_many_arg(sub))
-    repl_env.set(MalSymbol('*'), fn_many_arg(mul))
-    repl_env.set(MalSymbol('/'), fn_many_arg(truediv))
-    repl_env.set(MalSymbol('<'), fn_many_arg(lt))
-    repl_env.set(MalSymbol('>'), fn_many_arg(gt))
-    repl_env.set(MalSymbol('<='), fn_many_arg(le))
-    repl_env.set(MalSymbol('>='), fn_many_arg(ge))
-    repl_env.set(MalSymbol('='), fn_many_arg(eq))
-    repl_env.set(MalSymbol('list'), lambda *args: MalList(args))
-    repl_env.set(
-        MalSymbol('list?'),
-        lambda *args: MalBoolean(isinstance(args[0], MalList))
-    )
-    repl_env.set(MalSymbol('count'), lambda *args: MalNumber(len(args[0])))
-    repl_env.set(
-        MalSymbol('empty?'),
-        lambda *args: MalBoolean(len(args[0]) == 0)
-    )
-    repl_env.set(MalSymbol('not'), lambda arg: MalBoolean(not arg))
-    repl_env.set(MalSymbol('nth'), nth)
-    repl_env.set(MalSymbol('first'), lambda arg: nth(arg, MalNumber(0)))
-    repl_env.set(MalSymbol('rest'), lambda arg: arg.__class__(arg.value[1:]))
-    repl_env.set(MalSymbol('pr-str'), pr_defis_str)
-    repl_env.set(MalSymbol('str'), _str)
-    repl_env.set(MalSymbol('prn'), prn)
-    repl_env.set(MalSymbol('println'), _println)
-    repl_env.set(MalSymbol('read-string'), read_defis_string)
-    repl_env.set(MalSymbol('slurp'), slurp)
-    repl_env.set(MalSymbol('cons'), cons)
-    repl_env.set(MalSymbol('concat'), concat)
-    repl_env.set(MalSymbol('vec'), lambda *args: MalVector(args))
-    repl_env.set(MalSymbol('vector'), lambda *args: MalVector(args))
-    repl_env.set(MalSymbol('vector?'), lambda arg: MalBoolean(isinstance(arg, MalVector)))
-    repl_env.set(MalSymbol('and'), fn_many_arg(and_))
-    repl_env.set(MalSymbol('or'), fn_many_arg(or_))
-    repl_env.set(MalSymbol('nil?'), lambda x: isinstance(x, MalNil))
-    repl_env.set(MalSymbol('false?'), lambda x: x == MalBoolean(False))
-    repl_env.set(MalSymbol('true?'), lambda x: x == MalBoolean(True))
-    repl_env.set(MalSymbol('symbol'), lambda x: MalSymbol(x.value))
-    repl_env.set(MalSymbol('symbol?'), lambda x: MalBoolean(isinstance(x, MalSymbol)))
-    repl_env.set(MalSymbol('keyword'), lambda x: MalKeyword(':' + x.value))
-    repl_env.set(MalSymbol('keyword?'), lambda x: MalBoolean(isinstance(x, MalKeyword)))
-    repl_env.set(MalSymbol('hash-map'), lambda *args: MalHashmap(args))
-    repl_env.set(MalSymbol('map?'), lambda arg: MalBoolean(isinstance(arg, MalHashmap)))
-    repl_env.set(
-        MalSymbol('assoc'),
-        lambda hashmap, *args: MalHashmap(
-            [
-                *reduce(add, [[k, v] for k, v in hashmap.value.items()], []),
-                *args,
-            ]
-        )
-    )
-    repl_env.set(
-        MalSymbol('dissoc'),
-        lambda hashmap, *keys_to_remove: MalHashmap(
-            reduce(lambda a, b: a + b, [[k, v] for k, v in hashmap.value.items() if k not in keys_to_remove], [])
-        )
-    )
-    repl_env.set(MalSymbol('get'), lambda hashmap, key: hashmap.value.get(key, MalNil(None)))
-    repl_env.set(MalSymbol('contains?'), lambda hashmap, key: MalBoolean(key in hashmap.value))
-    repl_env.set(MalSymbol('keys'), lambda hashmap: MalList(list(hashmap.value.keys())))
-    repl_env.set(MalSymbol('values'), lambda hashmap: MalList(list(hashmap.value.values())))
-    return repl_env
+def seq(entity):
+    if (
+        (is_iterable(entity) or is_string(entity))
+        and len(entity)
+    ):
+        return make_list(entity)
+    return NIL
 
 
-repl_env = set_up_new_global_env()
+def conj(collection, *args):
+    if is_list(collection):
+        return make_list([*reversed(args), *collection])
+    if is_vector(collection):
+        return make_vector([*collection, *args])
+    raise TypeError('conj element 1 should be a collection')
+
+
+def py_eval(expression):
+    result = eval(expression)
+    if isinstance(result, (tuple, list)):
+        return make_list(result)
+    elif isinstance(result, str):
+        return result
+    elif isinstance(result, bool):
+        return result
+    elif isinstance(result, dict):
+        return make_hashmap_from_pydict(result)
+    elif isinstance(result, (int, float)):
+        return make_number(result)
+    elif result is None:
+        return NIL
+    raise TypeError(f'Can\'t convert python type {type(result)} to mal type')
+
+
+def meta(element):
+    if not can_have_metadata(element):
+        raise TypeError(f'Type {type(element)} can\'t have meta')
+    try:
+        return element.meta
+    except AttributeError:
+        return NIL
+
+
+def with_meta(target, metadata):
+    if not can_have_metadata(target):
+        raise TypeError(f'Type {type(target)} can\'t have meta')
+    target_copy = copy(target)
+    try:
+        target_copy.meta = metadata
+    except AttributeError:
+        return target
+    else:
+        return target_copy
+
+
+namespace_ = {
+    '+': add,
+    '-': sub,
+    '*': mul,
+    '/': truediv,
+    '<': lt,
+    '<=': le,
+    '>': gt,
+    '>=': ge,
+    '=': equal,
+    'list': lambda *args: make_list(args),
+    'list?': is_list,
+    'prn': prn,
+    'println': println,
+    'pr-str': pr_str_,
+    'str': str_,
+    'empty?': is_empty,
+    'count': count,
+    'read-string': read_str,
+    'slurp': slurp,
+    'atom': make_atom,
+    'atom?': is_atom,
+    'deref': deref,
+    'swap!': swap,
+    'reset!': reset,
+    'cons': cons,
+    'concat': concat,
+    'vec': make_vector,
+    'first': first,
+    'rest': rest,
+    'nth': nth,
+    'nil?': is_nil,
+    'true?': is_true,
+    'false?': is_false,
+    'symbol': make_symbol,
+    'symbol?': is_symbol,
+    'keyword': make_keyword,
+    'keyword?': is_keyword,
+    'vector': make_vector_vargs,
+    'vector?': is_vector,
+    'sequential?': is_iterable,
+    'hash-map': make_hashmap_vargs,
+    'map?': is_hashmap,
+    'get': get,
+    'keys': keys,
+    'vals': values,
+    'contains?': contains,
+    'assoc': assoc,
+    'dissoc': dissoc,
+    'readline': mal_readline,
+    '*host-language*': make_string("\"python-by-davemus\""),
+    'time-ms': lambda: time() / 1000,
+    # metadata is not supported in my mal implementation
+    'meta': meta,
+    'with-meta': with_meta,
+    'fn?': lambda entity: is_function(entity) or (is_mal_function(entity) and not entity.is_macro),
+    'macro?': lambda entity: is_mal_function(entity) and entity.is_macro,
+    'string?': is_string,
+    'number?': is_number,
+    'seq': seq,
+    'conj': conj,
+    'py-eval': py_eval,
+}
+
+namespace = {make_symbol(k): v for k, v in namespace_.items()}

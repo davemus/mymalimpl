@@ -10,8 +10,4 @@ readline.set_history_length(1000)
 readline.read_history_file(history_file)
 
 
-def mal_readline(prompt='user> '):
-    return input(prompt)
-
-
 atexit.register(readline.write_history_file, history_file)

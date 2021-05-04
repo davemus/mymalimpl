@@ -1,8 +1,9 @@
-from mal_types import MalSymbol, MalList
-from errors import NotFound
+from mal_types import (
+    make_symbol, make_list, is_symbol, MalException
+)
 
 
-VARIADIC_ASSIGNMENT_SYMBOL = MalSymbol('&')
+VARIADIC_ASSIGNMENT_SYMBOL = make_symbol('&')
 
 
 class Env:
@@ -14,14 +15,14 @@ class Env:
             and VARIADIC_ASSIGNMENT_SYMBOL not in binds
         ):
             raise ValueError
-        for counter in range(len(exprs)):
-            if binds[counter] == VARIADIC_ASSIGNMENT_SYMBOL:
-                self.set(binds[counter + 1], MalList(exprs[counter:]))
+        for idx, elem in enumerate(binds):
+            if elem == VARIADIC_ASSIGNMENT_SYMBOL:
+                self.set(binds[idx + 1], make_list(exprs[idx:]))
                 return
-            self.set(binds[counter], exprs[counter])
+            self.set(elem, exprs[idx])
 
-    def set(self, name: MalSymbol, mal_type):
-        self._scope[name] = mal_type
+    def set(self, name, value):
+        self._scope[name] = value
 
     def find(self, name):
         if name in self._scope:
@@ -33,19 +34,13 @@ class Env:
     def get(self, name):
         env = self.find(name)
         if env is None:
-            raise NotFound(name)
+            if is_symbol(name):
+                name = str(name, encoding='utf-8')
+            raise RuntimeError(f"\"'{name}' not found\"")
         return env._scope[name]
 
     def __str__(self):
-        return '#environment'
-
-    def debug_repr(self):
-        level = 0
-        scope = self
-        while scope._outer is not None:
-            scope = scope._outer
-            level += 1
-        return (
-            f'Environment with level {level}: ' + str(self._scope)
-            + (str(self._outer) if self._outer is not None else '')
-        )
+        str_repr = f'Definitions on this level: {tuple(self._scope)}'
+        if self._outer is None:
+            return str_repr
+        return str_repr + '    ' + str(self._outer)
