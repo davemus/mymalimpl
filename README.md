@@ -7,3 +7,7 @@ My variant of mal completes (as of 2021-05-04) all main tests and optional excep
 
 * 3 optional tests in stepA
 * all optional tests, related to quasiquote special form, that is needed only for debug
+
+You could run it via ```python3 stepA.py```
+
+For syntax please refer to [original repository docs](https://raw.githubusercontent.com/kanaka/mal/master/docs/)
