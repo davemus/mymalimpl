@@ -10,4 +10,4 @@ My variant of mal completes (as of 2021-05-04) all main tests and optional excep
 
 You could run it via ```python3 stepA.py```
 
-For syntax please refer to [original repository docs](https://raw.githubusercontent.com/kanaka/mal/master/docs/)
+For syntax please refer to [original repository docs](https://github.com/kanaka/mal/tree/master/docs)
